@@ -9,6 +9,7 @@ import { ChatTab } from '@/components/workspace/ChatTab';
 import { EntityTab } from '@/components/workspace/EntityTab';
 import { SparqlTab } from '@/components/workspace/SparqlTab';
 import { MyGraphsTab } from '@/components/workspace/MyGraphsTab';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export type TabType = 'overview' | 'search' | 'chat' | 'entity' | 'sparql' | 'graphs' | 'settings';
 
@@ -16,7 +17,8 @@ const Workspace = () => {
   const { graphId } = useParams();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [apiConnected, setApiConnected] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
 
   useEffect(() => {
     // Check API connection
@@ -24,6 +26,11 @@ const Workspace = () => {
       .then(() => setApiConnected(true))
       .catch(() => setApiConnected(false));
   }, []);
+
+  useEffect(() => {
+    // Auto-collapse sidebar on mobile
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
 
   const renderTab = () => {
     if (!graphId) return null;
@@ -51,10 +58,13 @@ const Workspace = () => {
       <ParticleBackground />
       <Header showNav={false} apiConnected={apiConnected} />
 
-      <div className="pt-24 flex">
+      <div className="pt-20 sm:pt-24 flex">
         <WorkspaceSidebar
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+            if (isMobile) setSidebarOpen(false);
+          }}
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
           filename={graphId || 'Unknown'}
@@ -62,10 +72,10 @@ const Workspace = () => {
 
         <main
           className={`flex-1 transition-all duration-300 ${
-            sidebarOpen ? 'ml-64' : 'ml-20'
+            sidebarOpen && !isMobile ? 'ml-64' : sidebarOpen && isMobile ? 'ml-0' : 'ml-0 sm:ml-20'
           }`}
         >
-          <div className="container py-8">{renderTab()}</div>
+          <div className="container py-6 sm:py-8 px-4">{renderTab()}</div>
         </main>
       </div>
     </div>

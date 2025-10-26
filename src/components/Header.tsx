@@ -49,18 +49,14 @@ export const Header = ({ showNav = true, apiConnected }: HeaderProps) => {
             </nav>
           )}
 
-          {/* Status Badge */}
+          {/* API Status Icon */}
           {apiConnected !== undefined && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  apiConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'
-                }`}
-              />
-              <span className="text-sm text-muted-foreground">
-                {apiConnected ? 'Connected' : 'Disconnected'}
-              </span>
-            </div>
+            <div
+              className={`w-3 h-3 rounded-full ${
+                apiConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+              }`}
+              title={apiConnected ? 'API Connected' : 'API Disconnected'}
+            />
           )}
         </div>
       </div>

@@ -7,12 +7,12 @@ export const ContactSection = () => {
   const [email, setEmail] = useState('');
 
   return (
-    <section className="py-24 px-6">
-      <div className="max-w-4xl mx-auto text-center space-y-8">
-        <h2 className="text-4xl md:text-5xl font-bold">
+    <section className="py-16 sm:py-24 px-4 sm:px-6">
+      <div className="max-w-4xl mx-auto text-center space-y-6 sm:space-y-8">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold">
           Get Started Today
         </h2>
-        <p className="text-xl text-muted-foreground">
+        <p className="text-lg sm:text-xl text-muted-foreground">
           Transform your documents into interactive knowledge graphs
         </p>
 
@@ -24,13 +24,15 @@ export const ContactSection = () => {
             onChange={(e) => setEmail(e.target.value)}
             className="h-12 bg-card border-border focus:border-primary"
           />
-          <Button className="h-12 px-8 shadow-glow-primary hover:shadow-glow-hover whitespace-nowrap">
+          <Button className="h-12 px-6 sm:px-8 shadow-glow-primary hover:shadow-glow-hover sm:whitespace-nowrap">
             Get Early Access
           </Button>
         </div>
 
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-muted-foreground">or</span>
+        <div className="flex items-center justify-center gap-4">
+          <div className="h-px flex-1 bg-border max-w-32" />
+          <span className="text-sm sm:text-base text-muted-foreground">or</span>
+          <div className="h-px flex-1 bg-border max-w-32" />
         </div>
 
         <div>
@@ -38,7 +40,7 @@ export const ContactSection = () => {
             <Mail className="w-4 h-4" />
             Contact Us
           </Button>
-          <p className="text-sm text-muted-foreground mt-4">
+          <p className="text-sm text-muted-foreground mt-4 break-all">
             madhav@knowledgegraph.ai
           </p>
         </div>

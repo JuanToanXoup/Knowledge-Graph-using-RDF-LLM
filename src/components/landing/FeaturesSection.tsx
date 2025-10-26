@@ -23,13 +23,13 @@ const features = [
 
 export const FeaturesSection = () => {
   return (
-    <section id="features" className="py-24 px-6">
+    <section id="features" className="py-16 sm:py-24 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-4xl font-bold text-center mb-16">
+        <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12 sm:mb-16">
           Powerful Features
         </h2>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
           {features.map((feature) => {
             const Icon = feature.icon;
             return (

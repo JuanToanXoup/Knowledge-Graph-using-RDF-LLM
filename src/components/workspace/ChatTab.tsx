@@ -63,9 +63,9 @@ export const ChatTab = ({ graphId }: ChatTabProps) => {
   };
 
   return (
-    <div className="h-[calc(100vh-12rem)] flex gap-6">
-      {/* Chat History Sidebar */}
-      <div className="w-80 flex flex-col border-r border-border">
+    <div className="h-[calc(100vh-10rem)] sm:h-[calc(100vh-12rem)] flex flex-col lg:flex-row gap-4 sm:gap-6">
+      {/* Chat History Sidebar - Hidden on mobile */}
+      <div className="hidden lg:flex lg:w-80 flex-col border-r border-border">
         <div className="p-4 border-b border-border">
           <Button className="w-full gap-2">
             <Plus className="w-4 h-4" />
@@ -80,16 +80,16 @@ export const ChatTab = ({ graphId }: ChatTabProps) => {
       </div>
 
       {/* Main Chat */}
-      <div className="flex-1 flex flex-col">
-        <div className="mb-4">
-          <h2 className="text-3xl font-bold">Chat & Q&A</h2>
-          <p className="text-muted-foreground">
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="mb-3 sm:mb-4">
+          <h2 className="text-2xl sm:text-3xl font-bold">Chat & Q&A</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Ask questions about your knowledge graph
           </p>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+        <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 mb-3 sm:mb-4">
           {messages.length === 0 ? (
             <div className="h-full flex items-center justify-center">
               <div className="text-center space-y-2">
@@ -105,13 +105,13 @@ export const ChatTab = ({ graphId }: ChatTabProps) => {
             messages.map((message) => (
               <Card
                 key={message.id}
-                className={`p-6 max-w-4xl ${
+                className={`p-4 sm:p-6 max-w-full sm:max-w-4xl ${
                   message.role === 'user'
                     ? 'ml-auto bg-muted'
                     : 'mr-auto border-l-2 border-primary'
                 }`}
               >
-                <p className="leading-relaxed whitespace-pre-wrap">
+                <p className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words">
                   {message.content}
                 </p>
 
@@ -166,13 +166,13 @@ export const ChatTab = ({ graphId }: ChatTabProps) => {
         </div>
 
         {/* Input */}
-        <Card className="p-4 border-border">
-          <div className="flex gap-4">
+        <Card className="p-3 sm:p-4 border-border">
+          <div className="flex gap-2 sm:gap-4">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask anything about your document..."
-              className="min-h-[60px] border-border focus:border-primary resize-none"
+              className="min-h-[60px] text-sm sm:text-base border-border focus:border-primary resize-none"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -183,9 +183,9 @@ export const ChatTab = ({ graphId }: ChatTabProps) => {
             <Button
               onClick={handleSend}
               disabled={!input.trim() || loading}
-              className="h-full px-6 shadow-glow-primary hover:shadow-glow-hover"
+              className="h-full px-4 sm:px-6 shadow-glow-primary hover:shadow-glow-hover"
             >
-              <Send className="w-5 h-5" />
+              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">

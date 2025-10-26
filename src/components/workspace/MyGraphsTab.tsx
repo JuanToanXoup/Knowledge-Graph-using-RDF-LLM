@@ -33,17 +33,17 @@ export const MyGraphsTab = () => {
   );
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold mb-2">My Graphs</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2">My Graphs</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Manage your knowledge graphs
           </p>
         </div>
         <Button
           onClick={() => navigate('/')}
-          className="gap-2 shadow-glow-primary hover:shadow-glow-hover"
+          className="gap-2 shadow-glow-primary hover:shadow-glow-hover w-full sm:w-auto"
         >
           <Upload className="w-4 h-4" />
           Upload New Document
@@ -55,40 +55,40 @@ export const MyGraphsTab = () => {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search graphs..."
-        className="max-w-md border-border focus:border-primary"
+        className="max-w-full sm:max-w-md border-border focus:border-primary"
       />
 
       {/* Graphs Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {filteredGraphs.map((graph) => (
           <Card
             key={graph.graph_id}
-            className="p-6 border-border hover:border-primary/50 transition-all group"
+            className="p-4 sm:p-6 border-border hover:border-primary/50 transition-all group"
           >
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                <FolderOpen className="w-6 h-6 text-primary" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <FolderOpen className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
               </div>
             </div>
 
-            <h3 className="text-lg font-semibold mb-2 truncate">
+            <h3 className="text-base sm:text-lg font-semibold mb-2 truncate">
               {graph.graph_id}
             </h3>
 
-            <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 sm:gap-4 mb-3 sm:mb-4 text-xs sm:text-sm text-muted-foreground flex-wrap">
               <span>{graph.entities_count} entities</span>
               <span>•</span>
               <span>{graph.relations_count} relations</span>
             </div>
 
-            <p className="text-xs text-muted-foreground mb-4">
+            <p className="text-xs text-muted-foreground mb-3 sm:mb-4">
               Created: {new Date(graph.created_at).toLocaleDateString()}
             </p>
 
             <div className="flex items-center gap-2">
               <Button
                 onClick={() => navigate(`/workspace/${graph.graph_id}`)}
-                className="flex-1"
+                className="flex-1 text-sm"
               >
                 Open
               </Button>
@@ -108,8 +108,8 @@ export const MyGraphsTab = () => {
       </div>
 
       {filteredGraphs.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">No graphs found</p>
+        <div className="text-center py-8 sm:py-12">
+          <p className="text-sm sm:text-base text-muted-foreground">No graphs found</p>
         </div>
       )}
     </div>

@@ -65,17 +65,17 @@ export const EntityTab = ({ graphId }: EntityTabProps) => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h2 className="text-3xl font-bold mb-2">Entity Explorer</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-2">Entity Explorer</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Explore entities and their relationships
         </p>
       </div>
 
       {/* Search */}
-      <Card className="p-6 border-border">
-        <div className="flex gap-4">
+      <Card className="p-4 sm:p-6 border-border">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
@@ -89,7 +89,7 @@ export const EntityTab = ({ graphId }: EntityTabProps) => {
           <Button
             onClick={handleSearch}
             disabled={!entity || loading}
-            className="h-12 px-8 shadow-glow-primary hover:shadow-glow-hover"
+            className="h-12 px-6 sm:px-8 shadow-glow-primary hover:shadow-glow-hover w-full sm:w-auto"
           >
             {loading ? 'Loading...' : 'Explore'}
           </Button>

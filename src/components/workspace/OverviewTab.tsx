@@ -53,29 +53,29 @@ export const OverviewTab = ({ graphId }: OverviewTabProps) => {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h2 className="text-3xl font-bold mb-2">Overview</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-2">Overview</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">
           View key metrics and statistics for your knowledge graph
         </p>
       </div>
 
       {/* Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {metrics.map((metric) => {
           const Icon = metric.icon;
           return (
-            <Card key={metric.label} className="p-6 border-border hover:border-primary/50 transition-all">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">
+            <Card key={metric.label} className="p-4 sm:p-6 border-border hover:border-primary/50 transition-all">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">
                     {metric.label}
                   </p>
-                  <p className="text-4xl font-bold">{metric.value}</p>
+                  <p className="text-2xl sm:text-3xl lg:text-4xl font-bold truncate">{metric.value}</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Icon className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                 </div>
               </div>
             </Card>
@@ -85,9 +85,9 @@ export const OverviewTab = ({ graphId }: OverviewTabProps) => {
 
       {/* Statistics */}
       {info?.statistics && (
-        <Card className="p-6 border-border">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold">Statistics</h3>
+        <Card className="p-4 sm:p-6 border-border">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4">
+            <h3 className="text-lg sm:text-xl font-semibold">Statistics</h3>
             <Button
               variant="outline"
               size="sm"

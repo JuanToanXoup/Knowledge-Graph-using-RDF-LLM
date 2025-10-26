@@ -52,8 +52,8 @@ export const HeroSection = () => {
   };
 
   return (
-    <section id="home" className="min-h-screen flex items-center justify-center px-6 pt-32">
-      <div className="max-w-7xl w-full grid md:grid-cols-[1.2fr,0.8fr] gap-12 items-center">
+    <section id="home" className="min-h-screen flex items-center justify-center px-4 sm:px-6 pt-24 sm:pt-32">
+      <div className="max-w-7xl w-full grid md:grid-cols-[1.2fr,0.8fr] gap-8 md:gap-12 items-center">
         {/* Left Content */}
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
@@ -61,14 +61,14 @@ export const HeroSection = () => {
             <span className="text-sm text-primary">Powered by Advanced AI</span>
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
             From Data Points to{' '}
             <span className="bg-gradient-ember bg-clip-text text-transparent">
               Knowledge Graphs
             </span>
           </h1>
 
-          <p className="text-xl text-muted-foreground max-w-2xl">
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl">
             Build, visualize, and reason through your own intelligent knowledge graph
           </p>
 
@@ -94,15 +94,15 @@ export const HeroSection = () => {
                 setIsDragging(true);
               }}
               onDragLeave={() => setIsDragging(false)}
-              className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all cursor-pointer ${
+              className={`relative border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center transition-all cursor-pointer ${
                 isDragging
                   ? 'border-primary bg-primary/5'
                   : 'border-primary/30 hover:border-primary/50 hover:bg-primary/5'
               }`}
               onClick={() => document.getElementById('file-input')?.click()}
             >
-              <Upload className="w-16 h-16 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Drag & drop your PDF here</h3>
+              <Upload className="w-12 h-12 sm:w-16 sm:h-16 text-primary mx-auto mb-4" />
+              <h3 className="text-lg sm:text-xl font-semibold mb-2">Drag & drop your PDF here</h3>
               <p className="text-muted-foreground mb-4">or click to browse</p>
               <p className="text-sm text-muted-foreground">
                 PDF, TXT, DOCX supported

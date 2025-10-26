@@ -98,44 +98,45 @@ export const SparqlTab = ({ graphId }: SparqlTabProps) => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h2 className="text-3xl font-bold mb-2">SPARQL Query</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-2">SPARQL Query</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Execute SPARQL queries on your knowledge graph
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-[1fr,300px] gap-6">
+      <div className="flex flex-col lg:grid lg:grid-cols-[1fr,300px] gap-4 sm:gap-6">
         {/* Editor Section */}
-        <div className="space-y-6">
-          <Card className="p-6 border-border">
-            <h3 className="text-lg font-semibold mb-4">Query Editor</h3>
+        <div className="space-y-4 sm:space-y-6">
+          <Card className="p-4 sm:p-6 border-border">
+            <h3 className="text-base sm:text-lg font-semibold mb-4">Query Editor</h3>
             <Textarea
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Enter your SPARQL query..."
-              className="min-h-[300px] font-mono text-sm border-border focus:border-primary"
+              className="min-h-[200px] sm:min-h-[300px] font-mono text-xs sm:text-sm border-border focus:border-primary"
             />
-            <div className="flex items-center gap-4 mt-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-4">
               <Button
                 onClick={handleExecute}
                 disabled={!query || loading}
                 className="gap-2 shadow-glow-primary hover:shadow-glow-hover"
               >
                 <Play className="w-4 h-4" />
-                {loading ? 'Executing...' : 'Execute Query'}
+                <span className="hidden sm:inline">{loading ? 'Executing...' : 'Execute Query'}</span>
+                <span className="sm:hidden">{loading ? 'Run' : 'Run'}</span>
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setQuery('')}
                 disabled={!query}
               >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Clear
+                <Trash2 className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Clear</span>
               </Button>
               {executionTime !== null && (
-                <span className="text-sm text-muted-foreground ml-auto">
+                <span className="text-xs sm:text-sm text-muted-foreground w-full sm:w-auto sm:ml-auto">
                   Executed in {executionTime}ms
                 </span>
               )}
@@ -212,10 +213,10 @@ export const SparqlTab = ({ graphId }: SparqlTabProps) => {
           )}
         </div>
 
-        {/* Examples Sidebar */}
-        <div className="space-y-4">
-          <Card className="p-6 border-border">
-            <h3 className="text-lg font-semibold mb-4">Example Queries</h3>
+        {/* Examples Sidebar - Hidden on mobile */}
+        <div className="space-y-4 hidden lg:block">
+          <Card className="p-4 sm:p-6 border-border">
+            <h3 className="text-base sm:text-lg font-semibold mb-4">Example Queries</h3>
             <div className="space-y-3">
               {exampleQueries.map((example) => (
                 <button
