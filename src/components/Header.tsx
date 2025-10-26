@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Brain } from 'lucide-react';
+import { Brain, LayoutDashboard, Home } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface HeaderProps {
   showNav?: boolean;
@@ -28,7 +29,7 @@ export const Header = ({ showNav = true, apiConnected }: HeaderProps) => {
           </Link>
 
           {/* Navigation */}
-          {showNav && (
+          {showNav ? (
             <nav className="hidden md:flex items-center gap-2">
               {['Home', 'Features', 'How it Works'].map((item) => {
                 const isActive = item === 'Home' && location.pathname === '/';
@@ -46,7 +47,28 @@ export const Header = ({ showNav = true, apiConnected }: HeaderProps) => {
                   </a>
                 );
               })}
+              <Link to="/workspace">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <LayoutDashboard className="w-4 h-4" />
+                  Workspace
+                </Button>
+              </Link>
             </nav>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link to="/">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Home className="w-4 h-4" />
+                  Home
+                </Button>
+              </Link>
+              <Link to="/workspace">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <LayoutDashboard className="w-4 h-4" />
+                  My Graphs
+                </Button>
+              </Link>
+            </div>
           )}
 
           {/* API Status Icon */}

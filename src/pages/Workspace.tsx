@@ -15,8 +15,9 @@ export type TabType = 'overview' | 'search' | 'chat' | 'entity' | 'sparql' | 'gr
 
 const Workspace = () => {
   const { graphId } = useParams();
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [activeTab, setActiveTab] = useState<TabType>(graphId ? 'overview' : 'graphs');
   const [apiConnected, setApiConnected] = useState(false);
+  const [graphInfo, setGraphInfo] = useState<any>(null);
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
 
@@ -28,24 +29,32 @@ const Workspace = () => {
   }, []);
 
   useEffect(() => {
+    // Fetch graph info if graphId exists
+    if (graphId) {
+      fetch(`http://localhost:8000/graph/${graphId}`)
+        .then((res) => res.json())
+        .then(setGraphInfo)
+        .catch(console.error);
+    }
+  }, [graphId]);
+
+  useEffect(() => {
     // Auto-collapse sidebar on mobile
     setSidebarOpen(!isMobile);
   }, [isMobile]);
 
   const renderTab = () => {
-    if (!graphId) return null;
-
     switch (activeTab) {
       case 'overview':
-        return <OverviewTab graphId={graphId} />;
+        return graphId ? <OverviewTab graphId={graphId} /> : <div className="p-8">Please select a graph from the My Graphs tab</div>;
       case 'search':
-        return <SearchTab graphId={graphId} />;
+        return graphId ? <SearchTab graphId={graphId} /> : <div className="p-8">Please select a graph from the My Graphs tab</div>;
       case 'chat':
-        return <ChatTab graphId={graphId} />;
+        return graphId ? <ChatTab graphId={graphId} /> : <div className="p-8">Please select a graph from the My Graphs tab</div>;
       case 'entity':
-        return <EntityTab graphId={graphId} />;
+        return graphId ? <EntityTab graphId={graphId} /> : <div className="p-8">Please select a graph from the My Graphs tab</div>;
       case 'sparql':
-        return <SparqlTab graphId={graphId} />;
+        return graphId ? <SparqlTab graphId={graphId} /> : <div className="p-8">Please select a graph from the My Graphs tab</div>;
       case 'graphs':
         return <MyGraphsTab />;
       default:
@@ -67,7 +76,7 @@ const Workspace = () => {
           }}
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
-          filename={graphId || 'Unknown'}
+          filename={graphInfo?.filename || graphId || 'My Workspace'}
         />
 
         <main

@@ -8,6 +8,7 @@ import heroGraph from '@/assets/hero-graph.jpg';
 export const HeroSection = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -25,6 +26,7 @@ export const HeroSection = () => {
   const handleCreateGraph = async () => {
     if (!file) return;
 
+    setIsUploading(true);
     const formData = new FormData();
     formData.append('file', file);
 
@@ -39,10 +41,13 @@ export const HeroSection = () => {
       const data = await response.json();
       toast({
         title: 'Success!',
-        description: `Graph created with ${data.entities_count} entities`,
+        description: `Graph created with ${data.entities_count} entities and ${data.relations_count} relations`,
       });
+      
+      // Navigate to workspace immediately
       navigate(`/workspace/${data.graph_id}`);
     } catch (error) {
+      setIsUploading(false);
       toast({
         title: 'Error',
         description: 'Failed to create knowledge graph. Make sure the API is running.',
@@ -115,6 +120,16 @@ export const HeroSection = () => {
                 className="hidden"
               />
             </div>
+          ) : isUploading ? (
+            <div className="p-12 rounded-2xl bg-card border border-border">
+              <div className="flex flex-col items-center justify-center space-y-4">
+                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold mb-2">Creating Knowledge Graph</h3>
+                  <p className="text-sm text-muted-foreground">Processing your document...</p>
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="space-y-4">
               <div className="p-6 rounded-2xl bg-card border border-border">
@@ -129,6 +144,7 @@ export const HeroSection = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => setFile(null)}
+                    disabled={isUploading}
                   >
                     Remove
                   </Button>
@@ -136,6 +152,7 @@ export const HeroSection = () => {
               </div>
               <Button
                 onClick={handleCreateGraph}
+                disabled={isUploading}
                 className="w-full h-14 text-lg shadow-glow-primary hover:shadow-glow-hover"
               >
                 Create Knowledge Graph

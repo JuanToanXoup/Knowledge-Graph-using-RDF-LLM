@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Send, Copy, ThumbsUp, ThumbsDown, Plus } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Send, Copy, ThumbsUp, ThumbsDown, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
@@ -20,7 +20,82 @@ export const ChatTab = ({ graphId }: ChatTabProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Load chat history on mount
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/chat_history/${graphId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.messages && data.messages.length > 0) {
+            setMessages(data.messages);
+            setHistoryLoaded(true);
+            // Scroll to bottom after loading history
+            setTimeout(scrollToBottom, 100);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load chat history:', error);
+      }
+    };
+
+    loadHistory();
+  }, [graphId]);
+
+  // Scroll to bottom when new messages are added
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages]);
+
+  // Save message to backend
+  const saveMessage = async (message: Message) => {
+    try {
+      await fetch(`http://localhost:8000/chat_history/${graphId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role: message.role,
+          content: message.content,
+          timestamp: new Date().toISOString(),
+          facts: message.facts || []
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to save message:', error);
+    }
+  };
+
+  // Clear chat history
+  const clearHistory = async () => {
+    try {
+      await fetch(`http://localhost:8000/chat_history/${graphId}`, {
+        method: 'DELETE',
+      });
+      setMessages([]);
+      toast({
+        title: 'Chat cleared',
+        description: 'Chat history has been cleared',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to clear chat history',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -32,6 +107,7 @@ export const ChatTab = ({ graphId }: ChatTabProps) => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    saveMessage(userMessage); // Save to backend
     setInput('');
     setLoading(true);
 
@@ -51,6 +127,7 @@ export const ChatTab = ({ graphId }: ChatTabProps) => {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+      saveMessage(assistantMessage); // Save to backend
     } catch (error) {
       toast({
         title: 'Error',
@@ -66,16 +143,30 @@ export const ChatTab = ({ graphId }: ChatTabProps) => {
     <div className="h-[calc(100vh-10rem)] sm:h-[calc(100vh-12rem)] flex flex-col lg:flex-row gap-4 sm:gap-6">
       {/* Chat History Sidebar - Hidden on mobile */}
       <div className="hidden lg:flex lg:w-80 flex-col border-r border-border">
-        <div className="p-4 border-b border-border">
-          <Button className="w-full gap-2">
-            <Plus className="w-4 h-4" />
-            New Chat
+        <div className="p-4 border-b border-border space-y-2">
+          <Button 
+            onClick={clearHistory}
+            variant="outline"
+            className="w-full gap-2"
+            disabled={messages.length === 0}
+          >
+            <Trash2 className="w-4 h-4" />
+            Clear History
           </Button>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
-          <p className="text-sm text-muted-foreground text-center py-8">
-            No previous conversations
-          </p>
+          {messages.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium mb-2">Chat History</p>
+              <p className="text-xs text-muted-foreground">
+                {messages.length} messages in this conversation
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No messages yet
+            </p>
+          )}
         </div>
       </div>
 
@@ -89,7 +180,10 @@ export const ChatTab = ({ graphId }: ChatTabProps) => {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 mb-3 sm:mb-4">
+        <div 
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 mb-3 sm:mb-4 scroll-smooth"
+        >
           {messages.length === 0 ? (
             <div className="h-full flex items-center justify-center">
               <div className="text-center space-y-2">
@@ -163,6 +257,8 @@ export const ChatTab = ({ graphId }: ChatTabProps) => {
               </div>
             </Card>
           )}
+          {/* Invisible element for scrolling */}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}

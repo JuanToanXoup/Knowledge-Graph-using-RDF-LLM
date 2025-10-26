@@ -17,16 +17,25 @@ export const OverviewTab = ({ graphId }: OverviewTabProps) => {
   const [info, setInfo] = useState<GraphInfo | null>(null);
   const [imageUrl, setImageUrl] = useState<string>('');
   const [showStats, setShowStats] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     // Fetch graph info
     fetch(`http://localhost:8000/graph/${graphId}`)
       .then((res) => res.json())
-      .then(setInfo)
+      .then((data) => {
+        setInfo(data);
+        console.log('Graph info loaded:', data);
+      })
       .catch(console.error);
 
     // Set visualization URL
-    setImageUrl(`http://localhost:8000/visualization/${graphId}`);
+    const vizUrl = `http://localhost:8000/visualization/${graphId}`;
+    setImageUrl(vizUrl);
+    setImageLoading(true);
+    setImageError(false);
+    console.log('Visualization URL:', vizUrl);
   }, [graphId]);
 
   const metrics = [
@@ -43,7 +52,7 @@ export const OverviewTab = ({ graphId }: OverviewTabProps) => {
     {
       icon: Layers,
       label: 'Total Triples',
-      value: ((info?.entities_count || 0) + (info?.relations_count || 0)),
+      value: info?.statistics?.triples || ((info?.entities_count || 0) + (info?.relations_count || 0)),
     },
     {
       icon: BarChart3,
@@ -107,32 +116,46 @@ export const OverviewTab = ({ graphId }: OverviewTabProps) => {
       {/* Graph Visualization */}
       <Card className="p-6 border-border">
         <h3 className="text-xl font-semibold mb-4">Graph Visualization</h3>
-        <div className="relative rounded-lg overflow-hidden bg-secondary">
-          {imageUrl && (
+        <div className="relative rounded-lg overflow-hidden bg-secondary min-h-[400px] flex items-center justify-center">
+          {imageLoading && !imageError && (
+            <div className="text-center p-8">
+              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading visualization...</p>
+            </div>
+          )}
+          {imageError && (
+            <div className="text-center p-8">
+              <p className="text-muted-foreground">Visualization not available</p>
+              <p className="text-xs text-muted-foreground mt-2">The graph image may still be generating</p>
+            </div>
+          )}
+          {imageUrl && !imageError && (
             <img
               src={imageUrl}
               alt="Knowledge Graph"
               className="w-full"
+              style={{ display: imageLoading ? 'none' : 'block' }}
+              onLoad={() => {
+                setImageLoading(false);
+                console.log('Visualization loaded successfully');
+              }}
               onError={(e) => {
-                e.currentTarget.src = '';
-                e.currentTarget.alt = 'Visualization not available';
+                setImageLoading(false);
+                setImageError(true);
+                console.error('Failed to load visualization');
               }}
             />
           )}
-          <div className="absolute bottom-4 right-4 flex gap-2">
-            <Button size="sm" variant="secondary">
-              Zoom In
-            </Button>
-            <Button size="sm" variant="secondary">
-              Zoom Out
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => window.open(imageUrl, '_blank')}
-            >
-              Download
-            </Button>
-          </div>
+          {!imageLoading && !imageError && (
+            <div className="absolute bottom-4 right-4 flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => window.open(imageUrl, '_blank')}
+              >
+                View Full Size
+              </Button>
+            </div>
+          )}
         </div>
       </Card>
     </div>

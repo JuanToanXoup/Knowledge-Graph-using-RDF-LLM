@@ -7,9 +7,11 @@ import { Input } from '@/components/ui/input';
 
 interface Graph {
   graph_id: string;
+  filename: string;
   created_at: string;
   entities_count: number;
   relations_count: number;
+  statistics?: any;
 }
 
 export const MyGraphsTab = () => {
@@ -29,7 +31,8 @@ export const MyGraphsTab = () => {
   };
 
   const filteredGraphs = graphs.filter((g) =>
-    g.graph_id.toLowerCase().includes(search.toLowerCase())
+    g.graph_id.toLowerCase().includes(search.toLowerCase()) ||
+    g.filename.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -72,8 +75,11 @@ export const MyGraphsTab = () => {
             </div>
 
             <h3 className="text-base sm:text-lg font-semibold mb-2 truncate">
-              {graph.graph_id}
+              {graph.filename}
             </h3>
+            <p className="text-xs text-muted-foreground mb-2 truncate">
+              ID: {graph.graph_id.substring(0, 16)}...
+            </p>
 
             <div className="flex items-center gap-2 sm:gap-4 mb-3 sm:mb-4 text-xs sm:text-sm text-muted-foreground flex-wrap">
               <span>{graph.entities_count} entities</span>
