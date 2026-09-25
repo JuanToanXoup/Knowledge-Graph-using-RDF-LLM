@@ -39,6 +39,14 @@ kotlin {
     }
 }
 
+// Production bundle (HTML, CSS, JS, images) exposed to `:backend`, which packages it into its jar.
+val webDistribution by configurations.consumable("webDistribution")
+artifacts {
+    add(webDistribution.name, layout.buildDirectory.dir("dist/js/productionExecutable")) {
+        builtBy(tasks.named("jsBrowserDistribution"))
+    }
+}
+
 // Kotlin 2.4 registers the Node.js download repository per project as well; the settings file already declares it.
 plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsPlugin> {
     the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec>().downloadBaseUrl.set(null as String?)

@@ -68,6 +68,31 @@ class ApiTest {
     }
 
     @Test
+    fun `bundled UI is served at the root with an SPA fallback`(
+        @TempDir root: Path,
+    ) = testApplication {
+        application {
+            module(
+                ApiState(openAiApiKey = null, promptExecutor = null, embedder = StubEmbedder(), outputRoot = root),
+                uiResources = "test-ui",
+            )
+        }
+        for (path in listOf("/", "/workspace", "/workspace/20250101_000000_abcdef01")) {
+            val response = client.get(path)
+            assertEquals(HttpStatusCode.OK, response.status, path)
+            assertTrue(response.bodyAsText().contains("<div id=\"root\">"), path)
+        }
+
+        val api = json.parseToJsonElement(client.get("/api").bodyAsText()).jsonObject
+        assertEquals("Knowledge Graph API", api["message"]!!.jsonPrimitive.content)
+        val health = json.parseToJsonElement(client.get("/health").bodyAsText()).jsonObject
+        assertEquals("healthy", health["status"]!!.jsonPrimitive.content)
+        val missing = client.get("/graph/does-not-exist")
+        assertEquals(HttpStatusCode.NotFound, missing.status)
+        assertTrue(json.parseToJsonElement(missing.bodyAsText()).jsonObject.containsKey("detail"))
+    }
+
+    @Test
     fun `unknown graphs answer 404 with a detail`(
         @TempDir root: Path,
     ) = testApplication {

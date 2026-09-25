@@ -24,9 +24,12 @@ class ApiError(
 /**
  * Typed HTTP client for the backend. The original components each called `fetch('http://localhost:8000/...')`
  * directly; the base URL is declared once here.
+ *
+ * Requests are same-origin: Ktor serves the bundled UI itself, and the webpack dev server proxies API paths
+ * to port 8000 (`frontend/webpack.config.d/devServer.js`).
  */
 object Api {
-    const val BASE_URL = "http://localhost:8000"
+    const val BASE_URL = ""
 
     val json =
         Json {
@@ -65,14 +68,15 @@ object Api {
         return json.decodeFromString(request(path, RequestMethod.POST, body = form))
     }
 
-    /** Absolute URL for links and images. */
+    /** URL for links and images. */
     fun url(path: String): String = BASE_URL + path
 
     suspend fun request(
         path: String,
         method: RequestMethod,
         body: BodyInit? = null,
-        headers: Headers? = null,
+        // Never null: fetch rejects `headers: null`, which is what a null Kotlin argument becomes.
+        headers: Headers = Headers(),
     ): String {
         val response = fetch(url(path), RequestInit(method = method, body = body, headers = headers))
         val text = response.textAsync().await().toString()

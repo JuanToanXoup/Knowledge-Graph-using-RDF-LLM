@@ -50,20 +50,36 @@ First run downloads the CoreNLP models (about 500 MB) and the MiniLM weights.
 
 ## Running
 
+Full stack, one server — the API and the production UI on http://localhost:8000:
+
 ```bash
-./gradlew :backend:run                                   # API on http://localhost:8000
-./gradlew :frontend:jsBrowserDevelopmentRun --continuous # UI on http://localhost:8080
+./gradlew :backend:runFullStack                          # run it from Gradle
+./gradlew :backend:installDist                           # or build backend/build/install/backend/bin/backend
+./gradlew :backend:buildFatJar                           # or a single backend/build/libs/backend-all.jar
+```
+
+Development, with hot reload on the UI:
+
+```bash
+./gradlew :backend:run                                   # API only on http://localhost:8000
+./gradlew :frontend:jsBrowserDevelopmentRun --continuous # UI on http://localhost:8080, API calls proxied to :8000
+```
+
+Other tasks:
+
+```bash
 ./gradlew :backend:runCli -Pfile=doc.pdf                 # single document + interactive query menu
 ./gradlew :backend:runBatch -Pargs="./documents/"        # batch into one graph
 ./gradlew build                                          # compile, test, lint everything
 ```
 
-Output (Turtle files, PNG visualizations) goes to `backend/output/`, logs to `backend/logs/`.
+The port defaults to 8000; set `PORT` to change it. Output (Turtle files, PNG visualizations) goes to `output/` under the working directory (`backend/` when run from Gradle), logs to `logs/`.
 
 ## API
 
 | Method | Path | Purpose |
 |---|---|---|
+| GET | `/api` | Service description (also at `/` when the UI is not bundled) |
 | POST | `/upload` | Upload a document and build its graph |
 | GET | `/health` | Health check |
 | GET | `/graphs` | List graphs |

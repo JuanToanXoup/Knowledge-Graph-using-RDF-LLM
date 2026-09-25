@@ -39,7 +39,7 @@ The original Vite/TypeScript UI was removed once this port was complete; it is p
 | Tests | — | `./gradlew :frontend:jsTest` |
 | Lint | `eslint` | `./gradlew :frontend:ktlintCheck` |
 
-The API base URL is `http://localhost:8000`, declared once in `lib/Api.kt`.
+API calls are same-origin (`lib/Api.kt`). In production `:backend` packages this bundle and serves it itself; in development `webpack.config.d/devServer.js` proxies the API paths to `http://localhost:8000` and falls back to `index.html` for client routes.
 
 ## Decisions taken against the spec's §9 list
 
@@ -50,5 +50,5 @@ The API base URL is `http://localhost:8000`, declared once in `lib/Api.kt`.
 | D-04 overview statistics | Triples from `total_triples`; entity types counted from `/entities/{id}` |
 | D-05 delete button | Wired to `DELETE /graph/{id}` |
 | D-05 thumbs, early access, contact, footer links, Settings | Left without behaviour, as in the original |
-| D-06 hard-coded base URL | Single constant |
+| D-06 hard-coded base URL | Removed: same-origin requests, dev server proxy |
 | Hero image | Moved from `src/assets/hero-graph.jpg` to `resources/hero-graph.jpg` |

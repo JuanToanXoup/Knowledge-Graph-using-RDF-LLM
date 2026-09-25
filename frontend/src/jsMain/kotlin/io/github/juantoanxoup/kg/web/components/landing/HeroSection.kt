@@ -217,7 +217,7 @@ val HeroSection =
                     div {
                         className = ClassName("hero-image")
                         img {
-                            src = "hero-graph.jpg"
+                            src = "/hero-graph.jpg"
                             alt = "Knowledge Graph Visualization"
                         }
                     }

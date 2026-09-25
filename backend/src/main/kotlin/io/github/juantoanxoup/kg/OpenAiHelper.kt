@@ -25,7 +25,14 @@ object OpenAiHelper {
         LLModel(
             provider = LLMProvider.OpenAI,
             id = Config.OPENAI_MODEL,
-            capabilities = listOf(LLMCapability.Temperature, LLMCapability.Schema.JSON.Basic, LLMCapability.Completion),
+            // `OpenAIEndpoint.Completions` tells Koog's OpenAI client which API to call; without it every request fails.
+            capabilities =
+                listOf(
+                    LLMCapability.Temperature,
+                    LLMCapability.Schema.JSON.Basic,
+                    LLMCapability.Completion,
+                    LLMCapability.OpenAIEndpoint.Completions,
+                ),
         )
 
     /** The model the original used for relation extraction. */

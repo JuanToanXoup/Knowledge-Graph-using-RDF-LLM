@@ -37,7 +37,8 @@ private val workspaceGraphRoute =
         ),
     )
 
-private val router =
+// Not named `router`: inside `RouterProvider { }` that name resolves to the props field, not this value.
+private val appRouter =
     createRouter(
         RouterOptions(
             routeTree = rootRoute.apply { addChildren(arrayOf(landingRoute, workspaceRoute, workspaceGraphRoute)) },
@@ -52,6 +53,6 @@ val App =
         QueryClientProvider {
             client = queryClient
             Toaster()
-            RouterProvider { this.router = router }
+            RouterProvider { router = appRouter }
         }
     }

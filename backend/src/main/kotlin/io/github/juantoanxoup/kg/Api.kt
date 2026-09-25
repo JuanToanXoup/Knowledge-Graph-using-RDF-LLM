@@ -14,6 +14,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.application.log
 import io.ktor.server.engine.embeddedServer
+import io.ktor.server.http.content.staticResources
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
@@ -24,6 +25,7 @@ import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondBytes
+import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -342,15 +344,27 @@ class ApiState(
 private const val API_VERSION = "1.0.0"
 private const val RELEVANT_FACTS = 5
 private val TURTLE = ContentType("text", "turtle")
+private const val STATIC_RESOURCES = "static"
 
 fun main() {
-    embeddedServer(Netty, port = 8000, host = "0.0.0.0", module = Application::module).start(wait = true)
+    val port = System.getenv("PORT")?.toIntOrNull() ?: 8000
+    embeddedServer(Netty, port = port, host = "0.0.0.0", module = Application::module).start(wait = true)
 }
 
 fun Application.module() = module(ApiState())
 
-/** Installs plugins and routes. Public so tests can supply their own [ApiState]. */
-fun Application.module(state: ApiState) {
+/** Classpath package of the production UI, or null when the jar carries none (see `backend/build.gradle.kts`). */
+fun bundledUiResources(): String? =
+    STATIC_RESOURCES.takeIf { Application::class.java.classLoader.getResource("$it/index.html") != null }
+
+/**
+ * Installs plugins and routes. Public so tests can supply their own [ApiState].
+ * When [uiResources] names a classpath package holding the web UI, it is served at `/` with an SPA fallback.
+ */
+fun Application.module(
+    state: ApiState,
+    uiResources: String? = bundledUiResources(),
+) {
     install(ContentNegotiation) {
         json(Json { encodeDefaults = true })
     }
@@ -373,12 +387,13 @@ fun Application.module(state: ApiState) {
     install(CallLogging)
 
     routing {
-        get("/") {
+        val apiIndex: suspend RoutingContext.() -> Unit = {
             call.respond(
                 buildJsonObject {
                     put("message", "Knowledge Graph API")
                     put("version", API_VERSION)
                     putJsonObject("endpoints") {
+                        put("api", "/api")
                         put("health", "/health")
                         put("upload", "/upload")
                         put("graphs", "/graphs")
@@ -391,6 +406,16 @@ fun Application.module(state: ApiState) {
                     }
                 },
             )
+        }
+        get("/api", apiIndex)
+        if (uiResources != null) {
+            // Explicit API routes take precedence; every other GET falls back to the SPA shell.
+            staticResources("/", uiResources) {
+                default("index.html")
+            }
+        } else {
+            // API-only build: keep the original service description at the root.
+            get("/", apiIndex)
         }
 
         get("/health") {
