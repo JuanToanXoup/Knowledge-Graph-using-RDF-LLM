@@ -89,6 +89,22 @@ The project follows a modular structure for clarity and maintainability:
   - `output/`: Stores generated RDF files (.ttl), visualizations (.png), etc.
   - `logs/`: Contains runtime logs from API and Streamlit.
 
+## ☕ Kotlin multimodule port
+
+A Gradle multimodule project alongside the Python code:
+
+- `backend/` — Kotlin/JVM: Ktor API, Apache Jena RDF, Stanford CoreNLP, DJL embeddings, Koog LLM access, plus the CLI and batch entry points
+- `frontend/` — Kotlin/JS React (JetBrains kotlin-wrappers): the same pages, tabs and design tokens
+- `docs/FUNCTIONAL_REQUIREMENTS.md` — the behaviour both modules implement, traced to the original files
+
+```bash
+./gradlew :backend:run                                  # API on :8000
+./gradlew :frontend:jsBrowserDevelopmentRun --continuous # UI on :8080
+./gradlew build                                         # compile, test, lint everything
+```
+
+See `backend/README.md` and `frontend/README.md` for the module maps and the decisions taken.
+
 ## 🔄 Pipeline and Workflow
 
 The system follows a structured pipeline for building knowledge graphs:

@@ -27,3 +27,13 @@ dist-ssr
 env
 venv
 
+
+# Gradle / Kotlin
+.gradle/
+build/
+.kotlin/
+*.iml
+.idea/
+# Runtime output of the Kotlin backend
+backend/output/
+backend/logs/
