@@ -353,7 +353,7 @@ fun main() {
 
 fun Application.module() = module(ApiState())
 
-/** Classpath package of the production UI, or null when the jar carries none (see `backend/build.gradle.kts`). */
+/** Classpath package of the production UI, or null when the classpath carries none (added by `application/build.gradle.kts`). */
 fun bundledUiResources(): String? =
     STATIC_RESOURCES.takeIf { Application::class.java.classLoader.getResource("$it/index.html") != null }
 
