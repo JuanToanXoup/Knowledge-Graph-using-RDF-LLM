@@ -39,11 +39,6 @@ kotlin {
     }
 }
 
-// The hero image lives in the original React tree; serve it without duplicating the binary.
-tasks.withType<ProcessResources>().configureEach {
-    from(rootProject.file("src/assets/hero-graph.jpg"))
-}
-
 // Kotlin 2.4 registers the Node.js download repository per project as well; the settings file already declares it.
 plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsPlugin> {
     the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec>().downloadBaseUrl.set(null as String?)

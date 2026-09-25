@@ -4,6 +4,8 @@ Implements every backend requirement in `docs/FUNCTIONAL_REQUIREMENTS.md` (FR-CF
 
 ## Module map
 
+The original Python code was removed once this port was complete; it is preserved in git history at commit `683ef48` and earlier.
+
 | Original file | Kotlin file | Library replacing the Python dependency |
 |---|---|---|
 | `config.py` | `Config.kt` | dotenv-kotlin |

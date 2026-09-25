@@ -15,6 +15,8 @@ Implements every UI requirement in `docs/FUNCTIONAL_REQUIREMENTS.md` (FR-UI). Re
 
 ## File map
 
+The original Vite/TypeScript UI was removed once this port was complete; it is preserved in git history at commit `683ef48` and earlier.
+
 | Original | Kotlin |
 |---|---|
 | `src/main.tsx` | `Main.kt` |
@@ -49,4 +51,4 @@ The API base URL is `http://localhost:8000`, declared once in `lib/Api.kt`.
 | D-05 delete button | Wired to `DELETE /graph/{id}` |
 | D-05 thumbs, early access, contact, footer links, Settings | Left without behaviour, as in the original |
 | D-06 hard-coded base URL | Single constant |
-| Hero image | Served from the original `src/assets/hero-graph.jpg` at build time, not duplicated |
+| Hero image | Moved from `src/assets/hero-graph.jpg` to `resources/hero-graph.jpg` |
