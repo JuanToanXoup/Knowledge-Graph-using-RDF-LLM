@@ -3,8 +3,6 @@ package io.github.juantoanxoup.kg
 import com.mxgraph.layout.mxFastOrganicLayout
 import com.mxgraph.util.mxCellRenderer
 import com.mxgraph.util.mxConstants
-import org.apache.jena.rdf.model.RDFNode
-import org.apache.jena.vocabulary.RDFS
 import org.jgrapht.Graph
 import org.jgrapht.ext.JGraphXAdapter
 import org.jgrapht.graph.AsSubgraph
@@ -31,35 +29,19 @@ class GraphVisualizer(
     private val log = LoggerFactory.getLogger(GraphVisualizer::class.java)
 
     /** One node per distinct label, one edge per triple; parallel edges collapse and the last label wins. */
-    fun createGraph(): DefaultDirectedGraph<String, LabeledEdge> {
-        val graph = DefaultDirectedGraph<String, LabeledEdge>(LabeledEdge::class.java)
-        for (statement in kg.model.listStatements()) {
-            val subject = getLabel(statement.subject)
-            val obj = getLabel(statement.`object`)
-            graph.addVertex(subject)
-            graph.addVertex(obj)
-            val edge = graph.getEdge(subject, obj) ?: graph.addEdge(subject, obj)
-            edge?.label = getLabel(statement.predicate)
+    fun createGraph(): DefaultDirectedGraph<String, LabeledEdge> =
+        kg.read { model ->
+            val graph = DefaultDirectedGraph<String, LabeledEdge>(LabeledEdge::class.java)
+            for (statement in model.listStatements()) {
+                val subject = kg.label(statement.subject)
+                val obj = kg.label(statement.`object`)
+                graph.addVertex(subject)
+                graph.addVertex(obj)
+                val edge = graph.getEdge(subject, obj) ?: graph.addEdge(subject, obj)
+                edge?.label = kg.label(statement.predicate)
+            }
+            graph
         }
-        return graph
-    }
-
-    /** Literal lexical form, else `rdfs:label`, else the last IRI segment with `_` as space. */
-    fun getLabel(node: RDFNode): String {
-        if (node.isLiteral) return node.asLiteral().lexicalForm
-        val label =
-            kg.model
-                .getProperty(node.asResource(), RDFS.label)
-                ?.`object`
-                ?.asLiteral()
-                ?.lexicalForm
-        if (label != null) return label
-        return node
-            .toString()
-            .substringAfterLast('/')
-            .substringAfterLast('#')
-            .replace('_', ' ')
-    }
 
     fun visualize(
         path: Path,

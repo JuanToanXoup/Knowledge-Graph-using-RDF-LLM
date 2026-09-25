@@ -25,8 +25,9 @@ dependencies {
     // LLM client, prompt DSL, structured output, embeddings, retrieval (openai_helper.py replacement)
     implementation(libs.bundles.koog)
 
-    // RDF store, SPARQL, serialization
+    // SPARQL, serialization, and the TDB2 persistent triple store
     implementation(libs.jena.arq)
+    implementation(libs.jena.tdb2)
 
     // NLP: tokenization, sentence splitting, NER, dependency parsing
     implementation(libs.corenlp)

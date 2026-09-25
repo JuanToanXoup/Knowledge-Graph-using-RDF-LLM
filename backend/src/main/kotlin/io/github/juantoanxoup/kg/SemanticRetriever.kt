@@ -10,8 +10,6 @@ import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.params.LLMParams
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import org.apache.jena.rdf.model.RDFNode
-import org.apache.jena.vocabulary.RDFS
 import org.slf4j.LoggerFactory
 
 /** One indexed triple, verbalized with labels. */
@@ -45,32 +43,19 @@ class SemanticRetriever(
     private var embeddings: List<Vector>? = null
 
     suspend fun indexGraph() {
+        // Labels are resolved inside one read transaction; embedding happens outside it because it suspends.
         val indexed =
-            kg.model.listStatements().toList().map { statement ->
-                val subject = getLabel(statement.subject)
-                val predicate = getLabel(statement.predicate)
-                val obj = getLabel(statement.`object`)
-                IndexedTriple(subject, predicate, obj, "$subject $predicate $obj")
+            kg.read { model ->
+                model.listStatements().toList().map { statement ->
+                    val subject = kg.label(statement.subject)
+                    val predicate = kg.label(statement.predicate)
+                    val obj = kg.label(statement.`object`)
+                    IndexedTriple(subject, predicate, obj, "$subject $predicate $obj")
+                }
             }
         triples = indexed
         embeddings = indexed.map { embedder.embed(it.text) }
         log.info("Indexed {} triples for semantic search", indexed.size)
-    }
-
-    fun getLabel(node: RDFNode): String {
-        if (node.isLiteral) return node.asLiteral().lexicalForm
-        val label =
-            kg.model
-                .getProperty(node.asResource(), RDFS.label)
-                ?.`object`
-                ?.asLiteral()
-                ?.lexicalForm
-        if (label != null) return label
-        return node
-            .toString()
-            .substringAfterLast('/')
-            .substringAfterLast('#')
-            .replace('_', ' ')
     }
 
     /** Top-k triples by dot product with the query embedding, descending. */

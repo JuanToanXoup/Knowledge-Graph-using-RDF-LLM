@@ -120,12 +120,12 @@ class RelationExtractor(
         val result =
             llm.executeStructured<ExtractedRelations>(
                 prompt = request,
-                model = OpenAiHelper.relationModel,
-                fixingParser = StructureFixingParser(OpenAiHelper.relationModel, retries = FIXING_RETRIES),
+                model = OpenAiHelper.defaultModel,
+                fixingParser = StructureFixingParser(OpenAiHelper.defaultModel, retries = FIXING_RETRIES),
             )
         return result
             .map { validateRelations(it.data.relations) }
-            .onSuccess { log.info("Extracted {} relations using LLM ({})", it.size, OpenAiHelper.relationModel.id) }
+            .onSuccess { log.info("Extracted {} relations using LLM ({})", it.size, OpenAiHelper.defaultModel.id) }
             .onFailure { log.error("LLM relation extraction failed: {}", it.message) }
             .getOrDefault(emptyList())
     }

@@ -31,6 +31,8 @@ dependencyResolutionManagement {
 rootProject.name = "knowledge-graph-using-rdf-llm"
 
 include("backend")
-include("frontend")
+// `frontend/` is a container: `web` is the React app, `cloud` the 3D graph view library it embeds.
+include("frontend:web")
+include("frontend:cloud")
 // Assembles backend + frontend into one deployable: `./gradlew :application:runFullStack`.
 include("application")

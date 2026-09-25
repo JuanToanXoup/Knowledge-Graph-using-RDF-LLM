@@ -3,6 +3,7 @@ package io.github.juantoanxoup.kg
 import org.apache.jena.query.ParameterizedSparqlString
 import org.apache.jena.query.QueryExecutionFactory
 import org.apache.jena.query.QueryFactory
+import org.apache.jena.rdf.model.Model
 import org.apache.jena.rdf.model.RDFNode
 import org.apache.jena.vocabulary.RDFS
 
@@ -17,10 +18,12 @@ class KnowledgeGraphQuerier(
     fun query(sparql: String): List<Map<String, String>> {
         val parsed = QueryFactory.create(sparql)
         require(parsed.isSelectType) { "Only SELECT queries are supported" }
-        return QueryExecutionFactory.create(parsed, kg.model).use { exec ->
-            val results = exec.execSelect()
-            val vars = results.resultVars
-            results.asSequence().map { row -> vars.associateWith { render(row[it]) } }.toList()
+        return kg.read { model ->
+            QueryExecutionFactory.create(parsed, model).use { exec ->
+                val results = exec.execSelect()
+                val vars = results.resultVars
+                results.asSequence().map { row -> vars.associateWith { render(row[it], model) } }.toList()
+            }
         }
     }
 
@@ -44,12 +47,15 @@ class KnowledgeGraphQuerier(
         return query(query.toString())
     }
 
-    private fun render(node: RDFNode?): String =
+    private fun render(
+        node: RDFNode?,
+        model: Model,
+    ): String =
         when {
             node == null -> ""
             node.isLiteral -> node.asLiteral().lexicalForm
             else ->
-                kg.model
+                model
                     .getProperty(node.asResource(), RDFS.label)
                     ?.`object`
                     ?.asLiteral()

@@ -39,8 +39,9 @@ ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx
 koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }
 koog-agents-test = { module = "ai.koog:agents-test", version.ref = "koog" }
 
-# RDF (rdflib replacement)
+# RDF (rdflib replacement): SPARQL engine and the TDB2 persistent triple store
 jena-arq = { module = "org.apache.jena:jena-arq", version.ref = "jena" }
+jena-tdb2 = { module = "org.apache.jena:jena-tdb2", version.ref = "jena" }
 
 # NLP (spaCy replacement: NER, sentence splitting, dependency parsing)
 corenlp = { module = "edu.stanford.nlp:stanford-corenlp", version.ref = "corenlp" }

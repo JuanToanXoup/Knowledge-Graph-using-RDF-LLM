@@ -52,6 +52,16 @@ class KnowledgeGraphBuilderTest {
     }
 
     @Test
+    fun `entities are read back from the graph with their types`() {
+        val entities = sampleGraph().entities()
+        assertEquals(4, entities.size)
+        assertEquals(Entity("Albert Einstein", "PERSON"), entities.first { it.text == "Albert Einstein" })
+        assertEquals(Entity("Princeton University", "ORG"), entities.first { it.text == "Princeton University" })
+        assertEquals(Entity("1879", "DATE"), entities.first { it.text == "1879" })
+        assertEquals("ENTITY", builder.entityTypeOf(builder.mapEntityType("MISC")))
+    }
+
+    @Test
     fun `statistics count triples subjects predicates and objects`() {
         val stats = sampleGraph().getStatistics()
         assertEquals(10, stats.totalTriples)

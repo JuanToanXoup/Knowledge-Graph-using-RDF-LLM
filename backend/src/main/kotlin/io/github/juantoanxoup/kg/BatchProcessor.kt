@@ -1,16 +1,15 @@
 package io.github.juantoanxoup.kg
 
-import ai.koog.prompt.executor.model.PromptExecutor
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.Path
-import kotlin.io.path.createDirectories
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
+import kotlin.io.path.outputStream
 import kotlin.streams.asSequence
 
 /** Result of processing one document in a batch. */
@@ -29,15 +28,15 @@ data class BatchSummary(
     val files: List<String>,
 )
 
-/** Processes many documents into one unified knowledge graph (batch_processor.py). */
+/** Processes many documents into one unified knowledge graph (batch_processor.py), stored like any upload. */
 class BatchProcessor(
-    executor: PromptExecutor? = OpenAiHelper.promptExecutor(),
-    private val outputDir: Path = Path(Config.DEFAULT_OUTPUT_DIR).resolve("kg_${newGraphId()}"),
+    private val state: ApiState = ApiState(),
+    val graphId: String = newGraphId(),
 ) {
     private val log = LoggerFactory.getLogger(BatchProcessor::class.java)
     private val docProcessor = DocumentProcessor()
     private val textPreprocessor = TextPreprocessor()
-    private val pipeline = Pipeline(executor)
+    private val pipeline = state.pipeline
     val kgBuilder = KnowledgeGraphBuilder()
 
     val allEntities = mutableListOf<Entity>()
@@ -93,8 +92,8 @@ class BatchProcessor(
             }
         }
 
-    /** Deduplicates across documents (first occurrence wins), builds, saves Turtle and PNG. */
-    fun buildUnifiedGraph(outputPrefix: String = "unified"): KnowledgeGraphBuilder {
+    /** Deduplicates across documents (first occurrence wins), builds, stores, and exports Turtle and PNG. */
+    suspend fun buildUnifiedGraph(): ActiveGraph {
         println("\n" + "=".repeat(70))
         println("Building Unified Knowledge Graph")
         println("=".repeat(70))
@@ -115,11 +114,18 @@ class BatchProcessor(
         println("  unique_predicates: ${stats.uniquePredicates}")
         println("  unique_objects: ${stats.uniqueObjects}")
 
-        outputDir.createDirectories()
-        kgBuilder.saveRdf(outputDir.resolve("${outputPrefix}_knowledge_graph.ttl"))
-        GraphVisualizer(kgBuilder).visualize(outputDir.resolve("${outputPrefix}_knowledge_graph.png"))
-        return kgBuilder
+        val filename = processedFiles.singleOrNull()?.name ?: "${processedFiles.size} documents"
+        val active = state.registerGraph(graphId, filename, kgBuilder, uniqueEntities.size, uniqueRelations.size)
+        state
+            .filesDir(graphId)
+            .resolve("knowledge_graph.ttl")
+            .outputStream()
+            .use { state.store.export(graphId, it) }
+        return active
     }
+
+    /** Directory holding the exported Turtle and PNG of the unified graph. */
+    val filesDir: Path get() = state.filesDir(graphId)
 
     fun getSummary() =
         BatchSummary(
@@ -162,7 +168,7 @@ fun main(args: Array<String>) =
             return@runBlocking
         }
 
-        val kgBuilder = processor.buildUnifiedGraph()
+        val graph = processor.buildUnifiedGraph()
         val summary = processor.getSummary()
         println("\n" + "=".repeat(70))
         println("PROCESSING SUMMARY")
@@ -173,13 +179,8 @@ fun main(args: Array<String>) =
         println("\nProcessed files:")
         summary.files.forEach { println("  - $it") }
 
-        println("\n" + "=".repeat(70))
-        println("Setting up Semantic Search")
-        println("=".repeat(70))
-        SemanticRetriever(kgBuilder).indexGraph()
-
-        println("\n✓ Knowledge graph ready for queries!")
-        println("\nOutput files saved in 'output/' directory:")
-        println("  - unified_knowledge_graph.ttl")
-        println("  - unified_knowledge_graph.png")
+        println("\n✓ Knowledge graph stored as <${graph.kg.namespace}graph/${graph.graphId}> and indexed for search")
+        println("\nFiles saved in '${processor.filesDir}/':")
+        println("  - knowledge_graph.ttl (RDF export)")
+        println("  - knowledge_graph.png (visualization)")
     }

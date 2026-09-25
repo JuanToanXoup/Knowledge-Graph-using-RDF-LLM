@@ -3,8 +3,9 @@ package io.github.juantoanxoup.kg
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.io.path.Path
-import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
+import kotlin.io.path.name
+import kotlin.io.path.outputStream
 import kotlin.system.exitProcess
 
 /**
@@ -51,7 +52,7 @@ fun runPipeline(inputFile: Path?) =
     runBlocking {
         val state = ApiState()
         val graphId = newGraphId()
-        val outputDir = Path(Config.DEFAULT_OUTPUT_DIR).resolve("kg_$graphId")
+        val filesDir = state.filesDir(graphId)
 
         banner("KNOWLEDGE GRAPH CREATION PIPELINE\nRun ID: $graphId")
 
@@ -91,22 +92,25 @@ fun runPipeline(inputFile: Path?) =
         kgBuilder.buildFromExtractions(entities, relations)
         println("\nGraph Statistics:")
         printStatistics(kgBuilder.getStatistics(), titleCase = false)
-        outputDir.createDirectories()
-        kgBuilder.saveRdf(outputDir.resolve("knowledge_graph.ttl"))
 
-        println("\nSTEP 6: Graph Visualization")
+        println("\nSTEP 6: Storage, Visualization and Indexing")
         println("-".repeat(70))
-        GraphVisualizer(kgBuilder).visualize(outputDir.resolve("knowledge_graph.png"))
+        val filename = inputFile?.name ?: "sample_document.txt"
+        val active = state.registerGraph(graphId, filename, kgBuilder, entities.size, relations.size)
+        val turtle = filesDir.resolve("knowledge_graph.ttl")
+        turtle.outputStream().use { state.store.export(graphId, it) }
 
         banner("KNOWLEDGE GRAPH CONSTRUCTION COMPLETED!")
-        println("\n✓ Output files saved in '$outputDir/' directory:")
-        println("  - knowledge_graph.ttl (RDF graph)")
+        println("\n✓ Graph stored as <${state.store.graphIri(graphId)}> in '${state.dataDir}/'")
+        println("✓ Files saved in '$filesDir/':")
+        println("  - knowledge_graph.ttl (RDF export)")
         println("  - knowledge_graph.png (visualization)")
 
         banner("LAUNCHING INTERACTIVE QUERY INTERFACE")
         prompt("\nPress Enter to start querying the knowledge graph...")
-        interactiveQueryInterface(kgBuilder, entities, state)
+        interactiveQueryInterface(active, entities, state)
         banner("SESSION COMPLETED!")
+        state.close()
     }
 
 private fun printStatistics(
@@ -127,14 +131,14 @@ private fun printStatistics(
 }
 
 suspend fun interactiveQueryInterface(
-    kgBuilder: KnowledgeGraphBuilder,
+    graph: ActiveGraph,
     entities: List<Entity>,
     state: ApiState,
 ) {
     banner("INITIALIZING QUERY INTERFACE")
-    val querier = KnowledgeGraphQuerier(kgBuilder)
-    val retriever = SemanticRetriever(kgBuilder, state.embedder)
-    retriever.indexGraph()
+    val kgBuilder = graph.kg
+    val querier = graph.querier
+    val retriever = graph.retriever
     println("✓ Query interface ready!")
 
     while (true) {

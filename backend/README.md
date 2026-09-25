@@ -15,6 +15,7 @@ The original Python code was removed once this port was complete; it is preserve
 | `relation_extractor.py` | `RelationExtractor.kt` | CoreNLP dependency parse; Koog structured output, retrying client, fixing parser |
 | `openai_helper.py` | `OpenAiHelper.kt` | Koog `OpenAILLMClient`, `MultiLLMPromptExecutor` |
 | `graph_builder.py` | `GraphBuilder.kt` | Apache Jena |
+| — | `GraphStore.kt` | Apache Jena TDB2: persistent dataset, one named graph per document, metadata and chat history as RDF |
 | `graph_querier.py` | `GraphQuerier.kt` | Jena ARQ, `ParameterizedSparqlString` |
 | `graph_visualizer.py` | `GraphVisualizer.kt` | JGraphT, JGraphX |
 | `semantic_retriever.py` | `SemanticRetriever.kt` | DJL (all-MiniLM-L6-v2) behind Koog `Embedder`; Koog prompt DSL |
@@ -37,9 +38,9 @@ The original Python code was removed once this port was complete; it is preserve
 | Tests | — | `./gradlew :backend:test` |
 | Lint | — | `./gradlew :backend:ktlintCheck` |
 
-This module is API-only. The `:application` module puts it on a classpath together with the production bundle of `:frontend` under `static/`; when that is present, Ktor serves it at `/` and answers every other unmatched GET with `index.html` so client routes such as `/workspace/{id}` load. API routes keep precedence, and the service description moves to `/api`.
+This module is API-only. The `:application` module puts it on a classpath together with the production bundle of `:frontend:web` under `static/`; when that is present, Ktor serves it at `/` and answers every other unmatched GET with `index.html` so client routes such as `/workspace/{id}` load. API routes keep precedence, and the service description moves to `/api`.
 
-Configuration: `PORT` (default 8000). `OPENAI_API_KEY` from `backend/.env` or the environment. Without it every LLM step is skipped and `/question_answer` answers 400, as in the original.
+Configuration: `PORT` (default 8000), `KG_DATA_DIR` (default `data`), and the OpenAI SDK variables `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`, all from `backend/.env` or the environment. Without a key every LLM step is skipped and `/question_answer` answers 400, as in the original.
 
 First run downloads the CoreNLP models jar (about 500 MB) through Gradle and the MiniLM weights plus PyTorch natives through DJL.
 

@@ -1,11 +1,14 @@
 package io.github.juantoanxoup.kg
 
 import io.github.cdimascio.dotenv.dotenv
+import java.nio.file.Path
+import kotlin.io.path.Path
 
 /**
  * Configuration and constants (config.py).
  *
- * `OPENAI_API_KEY` is read from a `.env` file in the working directory or from the process environment.
+ * Settings are read from a `.env` file in the working directory or from the process environment. The LLM settings
+ * are the standard OpenAI SDK variables, so any OpenAI-compatible endpoint (a local gateway, a proxy) can be used.
  */
 object Config {
     private val env =
@@ -14,10 +17,13 @@ object Config {
             ignoreIfMalformed = true
         }
 
-    // API configuration
+    // LLM endpoint: OPENAI_API_KEY (required for LLM steps), OPENAI_BASE_URL, OPENAI_MODEL
+    const val DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1"
+    const val DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
     val openAiApiKey: String? = env["OPENAI_API_KEY"]?.takeIf { it.isNotBlank() }
-    const val OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
-    const val OPENAI_MODEL = "gpt-3.5-turbo"
+    val openAiBaseUrl: String =
+        env["OPENAI_BASE_URL"]?.trim()?.trimEnd('/')?.takeIf { it.isNotBlank() } ?: DEFAULT_OPENAI_BASE_URL
+    val openAiModel: String = env["OPENAI_MODEL"]?.trim()?.takeIf { it.isNotBlank() } ?: DEFAULT_OPENAI_MODEL
 
     // Knowledge graph configuration
     const val DEFAULT_NAMESPACE = "http://example.org/kg/"
@@ -33,8 +39,9 @@ object Config {
     const val NODE_DIAMETER_PX = 110
     const val ARROW_SIZE = 20
 
-    // File paths
-    const val DEFAULT_OUTPUT_DIR = "output"
+    // Storage: the TDB2 triple store lives under `<dataDir>/tdb2`, per-graph files under `<dataDir>/graphs/<id>`.
+    const val DEFAULT_DATA_DIR = "data"
+    val dataDir: Path = Path(env["KG_DATA_DIR"]?.takeIf { it.isNotBlank() } ?: DEFAULT_DATA_DIR)
     const val DEFAULT_RDF_FORMAT = "TURTLE"
 
     // Request configuration
