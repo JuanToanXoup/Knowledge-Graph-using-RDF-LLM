@@ -39,7 +39,7 @@ kotlin {
     }
 }
 
-// Production bundle (HTML, CSS, JS, images) exposed to `:backend`, which packages it into its jar.
+// Production bundle (HTML, CSS, JS, images) exposed to `:application`, which serves it through the backend.
 val webDistribution by configurations.consumable("webDistribution")
 artifacts {
     add(webDistribution.name, layout.buildDirectory.dir("dist/js/productionExecutable")) {

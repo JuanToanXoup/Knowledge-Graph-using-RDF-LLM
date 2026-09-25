@@ -32,3 +32,5 @@ rootProject.name = "knowledge-graph-using-rdf-llm"
 
 include("backend")
 include("frontend")
+// Assembles backend + frontend into one deployable: `./gradlew :application:runFullStack`.
+include("application")

@@ -31,13 +31,13 @@ The original Python code was removed once this port was complete; it is preserve
 | Task | Equivalent | Command |
 |---|---|---|
 | API on port 8000 | `uvicorn api:app` | `./gradlew :backend:run` |
-| API + bundled web UI on port 8000 | `start.sh` | `./gradlew :backend:runFullStack`, or `installDist` / `buildFatJar` |
+| API + web UI on port 8000 | `start.sh` | `./gradlew :application:runFullStack` (see below) |
 | Single-document pipeline + query menu | `python main.py [file]` | `./gradlew :backend:runCli [-Pfile=doc.pdf]` |
 | Batch | `python batch_processor.py <dir\|files>` | `./gradlew :backend:runBatch -Pargs="./documents/ *.pdf"` |
 | Tests | — | `./gradlew :backend:test` |
 | Lint | — | `./gradlew :backend:ktlintCheck` |
 
-The packaged jar (`jar`, `shadowJar`, and so `installDist`, `distZip`, `buildFatJar`) carries the production bundle of `:frontend` under `static/`. When it is present, Ktor serves it at `/` and answers every other unmatched GET with `index.html` so client routes such as `/workspace/{id}` load; the API routes keep precedence, and the service description moves to `/api`. `run` and the tests use the class directories, so they stay API-only and skip the webpack build.
+This module is API-only. The `:application` module puts it on a classpath together with the production bundle of `:frontend` under `static/`; when that is present, Ktor serves it at `/` and answers every other unmatched GET with `index.html` so client routes such as `/workspace/{id}` load. API routes keep precedence, and the service description moves to `/api`.
 
 Configuration: `PORT` (default 8000). `OPENAI_API_KEY` from `backend/.env` or the environment. Without it every LLM step is skipped and `/question_answer` answers 400, as in the original.
 

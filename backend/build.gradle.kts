@@ -15,13 +15,7 @@ application {
     applicationDefaultJvmArgs = listOf("-Djava.awt.headless=true")
 }
 
-// Production web UI from `:frontend`; packaged under `static/` in the jar and served by Ktor at `/`.
-val webUi by configurations.dependencyScope("webUi")
-val webUiFiles by configurations.resolvable("webUiFiles") { extendsFrom(webUi) }
-
 dependencies {
-    webUi(project(path = ":frontend", configuration = "webDistribution"))
-
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
 
@@ -73,24 +67,6 @@ tasks.test {
 
 tasks.named<JavaExec>("run") {
     workingDir = projectDir
-}
-
-// Only the packaged jars carry the UI, so `run` and the tests stay API-only and skip the webpack build.
-tasks.withType<Jar>().matching { it.name == "jar" || it.name == "shadowJar" }.configureEach {
-    from(webUiFiles) {
-        into("static")
-        exclude("**/*.map")
-    }
-}
-
-// Full stack on port 8000: the API plus the production UI, from the packaged jar.
-val runFullStack by tasks.registering(JavaExec::class) {
-    group = "application"
-    description = "Runs the API and serves the production web UI from the same server on port 8000."
-    classpath = files(tasks.jar) + configurations.runtimeClasspath.get()
-    mainClass = application.mainClass
-    workingDir = projectDir
-    jvmArgs("-Djava.awt.headless=true")
 }
 
 // main.py equivalent: `./gradlew :backend:runCli [-Pfile=path/to/document.pdf]`

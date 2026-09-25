@@ -6,6 +6,7 @@ Written in Kotlin as a Gradle multimodule project:
 
 - `backend/` — Kotlin/JVM: Ktor HTTP API, Apache Jena (RDF + SPARQL), Stanford CoreNLP (NER, dependency patterns), DJL `all-MiniLM-L6-v2` embeddings, Koog for OpenAI access, plus CLI and batch entry points
 - `frontend/` — Kotlin/JS React UI (JetBrains kotlin-wrappers): landing page and graph workspace
+- `application/` — the full-stack assembly: the backend plus the production UI bundle, served by one Ktor server
 - `docs/FUNCTIONAL_REQUIREMENTS.md` — the behaviour both modules implement
 
 ## Visual interface
@@ -53,9 +54,9 @@ First run downloads the CoreNLP models (about 500 MB) and the MiniLM weights.
 Full stack, one server — the API and the production UI on http://localhost:8000:
 
 ```bash
-./gradlew :backend:runFullStack                          # run it from Gradle
-./gradlew :backend:installDist                           # or build backend/build/install/backend/bin/backend
-./gradlew :backend:buildFatJar                           # or a single backend/build/libs/backend-all.jar
+./gradlew :application:runFullStack                      # run it from Gradle
+./gradlew :application:installDist                       # or build application/build/install/application/bin/application
+./gradlew :application:buildFatJar                       # or a single application/build/libs/application-all.jar
 ```
 
 Development, with hot reload on the UI:

@@ -39,7 +39,7 @@ The original Vite/TypeScript UI was removed once this port was complete; it is p
 | Tests | — | `./gradlew :frontend:jsTest` |
 | Lint | `eslint` | `./gradlew :frontend:ktlintCheck` |
 
-API calls are same-origin (`lib/Api.kt`). In production `:backend` packages this bundle and serves it itself; in development `webpack.config.d/devServer.js` proxies the API paths to `http://localhost:8000` and falls back to `index.html` for client routes.
+API calls are same-origin (`lib/Api.kt`). In production `:application` packages this bundle with `:backend`, which serves it itself; in development `webpack.config.d/devServer.js` proxies the API paths to `http://localhost:8000` and falls back to `index.html` for client routes.
 
 ## Decisions taken against the spec's §9 list
 
