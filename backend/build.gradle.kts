@@ -70,7 +70,7 @@ tasks.named<JavaExec>("run") {
 }
 
 // main.py equivalent: `./gradlew :backend:runCli [-Pfile=path/to/document.pdf]`
-val runCli by tasks.registering(JavaExec::class) {
+tasks.register<JavaExec>("runCli") {
     group = "application"
     description = "Runs the single-document pipeline and the interactive query menu."
     classpath = sourceSets.main.get().runtimeClasspath
@@ -82,7 +82,7 @@ val runCli by tasks.registering(JavaExec::class) {
 }
 
 // batch_processor.py equivalent: `./gradlew :backend:runBatch -Pargs="./documents/ *.pdf"`
-val runBatch by tasks.registering(JavaExec::class) {
+tasks.register<JavaExec>("runBatch") {
     group = "application"
     description = "Processes a directory or a list of files into one unified graph."
     classpath = sourceSets.main.get().runtimeClasspath

@@ -14,12 +14,12 @@ application {
     applicationDefaultJvmArgs = listOf("-Djava.awt.headless=true")
 }
 
-val webUi by configurations.dependencyScope("webUi")
-val webUiFiles by configurations.resolvable("webUiFiles") { extendsFrom(webUi) }
+val webUi = configurations.dependencyScope("webUi")
+val webUiFiles = configurations.resolvable("webUiFiles") { extendsFrom(webUi.get()) }
 
 dependencies {
     implementation(project(":backend"))
-    webUi(project(path = ":frontend", configuration = "webDistribution"))
+    add(webUi.name, project(path = ":frontend", configuration = "webDistribution"))
 }
 
 // Ktor serves `static/` at `/` when present (see `bundledUiResources` in backend `Api.kt`).
