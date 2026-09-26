@@ -11,6 +11,7 @@ Implements every UI requirement in `docs/FUNCTIONAL_REQUIREMENTS.md` (FR-UI). Re
 | Query client | `kotlin-tanstack-react-query` | JetBrains kotlin-wrappers |
 | DOM, fetch, canvas | `kotlin-browser` | JetBrains kotlin-wrappers |
 | Icons | `lucide-react` 0.462.0 | npm, declared through Gradle |
+| Markdown in answers | `react-markdown` 10.1.0, `remark-gfm` 4.0.1 | npm, declared through Gradle |
 | Styling | `resources/index.css` | the original design tokens, no Tailwind build step |
 
 ## File map
@@ -27,7 +28,8 @@ The original Vite/TypeScript UI was removed once this port was complete; it is p
 | `src/components/workspace/*` | `components/workspace/*` |
 | `src/components/ui/*` (the eight primitives actually used) | `components/ui/*` |
 | `src/hooks/*` | `hooks/*` |
-| `src/lib/utils.ts` | `lib/Utils.kt`; plus `lib/Api.kt` (typed client) and `lib/Models.kt` (response models) |
+| `src/lib/utils.ts` | `lib/Utils.kt`; plus `lib/Api.kt` (typed client), `lib/Models.kt` (response models) and `lib/Markdown.kt` (react-markdown, remark-gfm) |
+| — | `components/chat/*`: the site-wide Graph Assistant panel (`ChatPanel`, `ChatMessages`, `ChatComposer`, `ChatState` for the tested state rules), mounted by `App.kt` on every route |
 | `index.html`, `src/index.css` | `resources/index.html`, `resources/index.css` |
 
 ## Run
@@ -52,3 +54,16 @@ API calls are same-origin (`lib/Api.kt`). In production `:application` packages 
 | D-05 thumbs, early access, contact, footer links, Settings | Left without behaviour, as in the original |
 | D-06 hard-coded base URL | Removed: same-origin requests, dev server proxy |
 | Hero image | Moved from `src/assets/hero-graph.jpg` to `resources/hero-graph.jpg` |
+
+## Graph Assistant, the site-wide chat
+
+One floating component on every page (`components/chat/ChatPanel.kt`, mounted by the root route in `App.kt`), structured after the Agentforce chat panel of help.salesforce.com as recorded in `koog-acp/docs/reference/agentforce-chat/SPEC.md`, in this app's own palette.
+
+| Part | Behaviour |
+|---|---|
+| Views | Button (bottom right pill), card (invite + composer, before the first message), sidebar (docked right below the header, over the page), fullscreen. The view is remembered across pages; a phone has no card and opens fullscreen |
+| Toolbar | Name, privacy note popover, overflow menu (download chat transcript, end conversation), expand or contract, minimize |
+| Graph | The page's `/workspace/{id}` graph, else the last chosen one, else a choice of graphs in the conversation; history per graph through the chat-history API |
+| Conversation | Hero until the first message, status rows (joined, ended), the person's messages, answers rendered as Markdown with the cited facts as source cards, typing indicator, scroll-to-bottom control |
+| Composer | Grows with its lines, Enter sends, Shift+Enter keeps a new line; a second line in the card opens the sidebar |
+| End | End conversation clears the server history and shows the return bar; Start a new conversation begins again |

@@ -41,3 +41,14 @@ external val Send: FC<IconProps>
 external val Copy: FC<IconProps>
 external val ThumbsUp: FC<IconProps>
 external val ThumbsDown: FC<IconProps>
+external val MoreVertical: FC<IconProps>
+external val Maximize2: FC<IconProps>
+external val Minimize2: FC<IconProps>
+external val Minus: FC<IconProps>
+external val Info: FC<IconProps>
+external val X: FC<IconProps>
+external val ArrowDown: FC<IconProps>
+external val Sparkles: FC<IconProps>
+external val Bot: FC<IconProps>
+external val FileText: FC<IconProps>
+external val MessageCircle: FC<IconProps>

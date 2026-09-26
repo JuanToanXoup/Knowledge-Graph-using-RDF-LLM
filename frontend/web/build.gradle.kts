@@ -34,6 +34,9 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             // Icon set used by the original UI.
             implementation(npm("lucide-react", "0.462.0"))
+            // Markdown in the assistant's answers (site-wide chat panel).
+            implementation(npm("react-markdown", "10.1.0"))
+            implementation(npm("remark-gfm", "4.0.1"))
         }
         jsTest.dependencies {
             implementation(libs.kotlin.test)

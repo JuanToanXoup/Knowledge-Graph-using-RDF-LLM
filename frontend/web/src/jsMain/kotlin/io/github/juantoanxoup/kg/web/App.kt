@@ -1,5 +1,6 @@
 package io.github.juantoanxoup.kg.web
 
+import io.github.juantoanxoup.kg.web.components.chat.ChatPanel
 import io.github.juantoanxoup.kg.web.components.ui.Toaster
 import io.github.juantoanxoup.kg.web.pages.Landing
 import io.github.juantoanxoup.kg.web.pages.NotFound
@@ -8,6 +9,7 @@ import react.FC
 import react.Props
 import tanstack.query.core.QueryClient
 import tanstack.react.query.QueryClientProvider
+import tanstack.react.router.Outlet
 import tanstack.react.router.RootRouteOptions
 import tanstack.react.router.RouteOptions
 import tanstack.react.router.RouterOptions
@@ -21,7 +23,14 @@ import tanstack.router.core.RoutePath
 /** Route parameter that carries the graph identifier (`/workspace/:graphId`). */
 val GRAPH_ID_PARAM = ParamName("graphId")
 
-private val rootRoute = createRootRoute(RootRouteOptions())
+/** Every page: the matched route, and the site-wide chat panel floating over it. */
+private val Shell =
+    FC<Props> {
+        Outlet()
+        ChatPanel()
+    }
+
+private val rootRoute = createRootRoute(RootRouteOptions(component = Shell))
 
 /** Routes as declared in src/App.tsx: `/`, `/workspace`, `/workspace/:graphId`, and a catch-all. */
 private val landingRoute =

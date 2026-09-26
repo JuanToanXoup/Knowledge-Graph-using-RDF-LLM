@@ -506,12 +506,30 @@ The workspace's second tab, after Overview. Source: `frontend/cloud/` (a port of
 | FR-3D-07 | Hint `Drag to rotate • Scroll to zoom` is shown over the scene |
 | FR-3D-08 | Not ported from term-graph: process-map and cone-tree layouts, depth of field, dataset loading by drop, URL or picker, and the `?term=` deep link |
 
-### 11.6 Traceability additions
+### 11.6 Site-wide chat, the Graph Assistant (FR-CHT)
+
+One floating chat component on every page, added after the Kotlin port. Its parts and states follow the Agentforce chat panel of help.salesforce.com, recorded node by node in `koog-acp/docs/reference/agentforce-chat/SPEC.md`; the look is this app's own. Source: `frontend/web/.../components/chat/`.
+
+| ID | Requirement |
+|---|---|
+| FR-CHT-01 | The component is present on every route, outside any page: a pill button or a card at the bottom right when minimized; a sidebar docked on the right below the site header, over the page, or a fullscreen view when open. The view is remembered across pages |
+| FR-CHT-02 | A desktop first shows the card (invite text and a composer with the sparkle icon); a phone first shows the button. On a phone the open view fills the screen and has no expand control |
+| FR-CHT-03 | Minimizing an open view goes to the card before the first message and to the button once the conversation holds messages; the button then reads "Active conversation" |
+| FR-CHT-04 | The toolbar holds the assistant's name, a privacy note popover with a Learn more link, an overflow menu with Download chat transcript and End conversation, expand or contract, and minimize. Escape closes the menu and the popover |
+| FR-CHT-05 | The assistant answers about the graph of the page's `/workspace/{id}` route, else the graph last chosen in the panel, else it offers the existing graphs as choices; with no graph at all it says where to build one |
+| FR-CHT-06 | The conversation shows a hero until the first message, a joined status row naming the graph, the person's messages with their time, the answers rendered as Markdown with the facts they rest on as numbered source cards, a typing indicator while an answer is on its way, and a scroll-to-bottom control when new content is below the fold |
+| FR-CHT-07 | The composer grows with its lines, Enter sends, Shift+Enter keeps a new line, send is disabled while empty or while an answer is on its way; a second line typed in the card opens the sidebar |
+| FR-CHT-08 | Messages and answers are stored through `POST /chat_history/{id}` and reloaded per graph; End conversation clears them through `DELETE /chat_history/{id}` and shows a return bar that starts a new conversation |
+| FR-CHT-09 | Download chat transcript saves the conversation as a text file named after the graph and the day |
+| FR-CHT-10 | Toasts move to the bottom left so the chat's corner stays free |
+
+### 11.7 Traceability additions
 
 | Feature | Backend FRs | API FRs | React UI FRs |
 |---|---|---|---|
 | Persist graphs | STO-01…09 | API-04…06, API-13 | UI-80…83 |
 | 3D cloud view | STO-04 | API-17 | 3D-01…08 |
+| Graph Assistant | QA-01…04, STO-02 | API-09, API-14…16 | CHT-01…10 |
 
 The Streamlit column of §10 no longer applies.
 

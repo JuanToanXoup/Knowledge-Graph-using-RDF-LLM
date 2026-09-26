@@ -26,6 +26,7 @@ The workspace after uploading a file:
 - **Graph construction**: RDF graphs with deduplication and merging across documents
 - **Visualization**: PNG network diagrams (JGraphT + JGraphX) and an interactive 3D cloud of the graph in the workspace (drag to rotate, click to focus, Escape and ←/→ to navigate)
 - **Querying**: semantic search, LLM question answering, entity relations, SPARQL SELECT
+- **Graph Assistant**: a site-wide chat that floats over every page, modelled on Salesforce's Agentforce panel: a button, a card, a docked sidebar or fullscreen; answers about the graph the page is on, cites the facts it used, keeps history per graph
 - **Batch processing**: several documents into one unified graph
 
 ## Pipeline
