@@ -8,7 +8,7 @@ Written in Kotlin as a Gradle multimodule project:
 - `frontend/web/` — Kotlin/JS React UI (JetBrains kotlin-wrappers): landing page and graph workspace
 - `frontend/cloud/` — Kotlin/JS library: the 3D graph cloud view (three.js via react-three-fiber) embedded by `web`
 - `application/` — the full-stack assembly: the backend plus the production UI bundle, served by one Ktor server
-- `docs/FUNCTIONAL_REQUIREMENTS.md` — the behaviour both modules implement
+- `docs/FUNCTIONAL_REQUIREMENTS.md` — the functional specification: the original system's behaviour (§§1–10) and what this implementation changed and added (§11)
 
 ## Visual interface
 

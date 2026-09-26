@@ -4,10 +4,11 @@
 |---|---|
 | Derived from | Repository state at commit `dc6892e` ("multiple changes-- however working") |
 | Method | Static reading of every module and component; nothing inferred from README alone |
-| Status | Baseline. Describes what the original design does, not what it should do |
-| Audience | Engineers porting the system to a new stack |
+| Status | §§1–10: baseline of the original Python and Vite design, kept as the porting record. §11: what the Kotlin system that replaced it changed, dropped and added. Together they describe the current system |
+| Audience | Engineers and product owners of the Kotlin system; §§1–10 remain the record of what was ported |
+| Current implementation | Kotlin multimodule build (`backend/`, `frontend/web/`, `frontend/cloud/`, `application/`), see `README.md` |
 
-Rule used throughout: a requirement appears here only if the original code implements it. Behaviours that are present but defective are listed separately in §9 so the port can decide on them rather than replicate them blindly.
+Rule used throughout §§1–10: a requirement appears there only if the original code implements it. Behaviours that are present but defective are listed separately in §9; §11.2 records how the port decided each one. Where §11 and an earlier section disagree, §11 is current.
 
 ---
 
@@ -430,3 +431,87 @@ Not requirements. Each is an inconsistency in the original that the new implemen
 | Manage graphs | — | API-04…07 | UI-80…83 | SUI-04 | — |
 | Chat history | — | API-14…16 | UI-50…51 | — | — |
 | Health | — | API-02 | UI-04, UI-20 | SUI-01 | — |
+
+---
+
+## 11. Kotlin system: changes, decisions and additions
+
+Applies from commit `683ef48` (the port) and `21131cb` (persistent storage and the 3D cloud view). Sources are the Kotlin modules; the original sources were removed at `b57a18b` and remain in history.
+
+### 11.1 Scope changes
+
+| Change | Detail |
+|---|---|
+| Streamlit UI (§6.14) dropped | The React web UI is the single client (D-07). FR-SUI requirements no longer apply |
+| `start.sh` (§6.17) replaced | Gradle tasks: `:application:runFullStack` serves API and UI from one server; `:backend:run`, `:backend:runCli`, `:backend:runBatch` for the API alone, the single-file CLI and the batch CLI. No auto-reload (D-14) |
+| Files per graph (§7.2) replaced | See §11.3. No `metadata.json`; descriptions live in the store |
+| Base URL (§6.12) | Same-origin from the bundled UI; `PORT` selects the port (default 8000) |
+| Service description (FR-API-01) | At `GET /api`; `GET /` serves the web UI when it is bundled and the service description otherwise. Unmatched GETs answer the UI's `index.html` so client routes load |
+
+### 11.2 Decisions on the §9 items
+
+| # | Decision in the Kotlin system |
+|---|---|
+| D-01 | Upload progress logged at the same percentages; no endpoint |
+| D-02 | Search results carry `similarity` and the UI reads it |
+| D-03 | Entity relations table: subject is the queried entity, predicate and object from the response |
+| D-04 | Overview reads `total_triples`; entity types counted from `/entities/{id}` |
+| D-05 | Delete graph wired to `DELETE /graph/{id}`; thumbs, early access, contact, footer links and Settings stay inert |
+| D-06 | No hard-coded base URL: same-origin requests, dev-server proxy |
+| D-07 | Streamlit dropped (§11.1) |
+| D-08 | Visualization draws one node per distinct label; IRIs and labels no longer appear twice |
+| D-09 | Text cleaning is Unicode-aware: letters of any script and basic punctuation are kept; other symbols, including quotation marks, are still removed |
+| D-10 | Mirrored: the entity LLM pass sends the whole document; the relation pass chunks by sentence |
+| D-11 | Mirrored: LLM relations need only non-empty fields |
+| D-12 | Mirrored: entity IRIs derive from surface text |
+| D-13 | Mirrored: dates are typed `kg:Date`, not `xsd:date` literals |
+| D-14 | Not applicable: no auto-reload, and graphs persist across restarts (§11.3) |
+| D-15 | Replaced by maintained JVM libraries: PDFBox, POI, CoreNLP, Jena, DJL, Koog, Ktor |
+| — | Entity lookup binds the entity name as a SPARQL literal (no injection); unbound variables render as empty strings; non-SELECT queries are rejected with an error; upload file names lose path segments |
+
+### 11.3 Persistent storage (FR-STO)
+
+| ID | Requirement | Source |
+|---|---|---|
+| FR-STO-01 | All graphs live in one Apache Jena TDB2 dataset at `$KG_DATA_DIR/tdb2`; `KG_DATA_DIR` comes from the environment or `.env`, default `data` under the working directory | `Config.kt`, `GraphStore.kt` |
+| FR-STO-02 | Each document's graph is the named graph `<namespace>graph/<id>`; its description (identifier, source file name, creation time, entity and relation counts, VoID triple, subject, property and object counts) is in the named graph `<namespace>graphs`; its chat history is in `<namespace>chat/<id>` | `GraphStore.kt` |
+| FR-STO-03 | Saving replaces the graph and its description in one transaction; every read and write runs in a TDB2 transaction | `GraphStore.kt` |
+| FR-STO-04 | Graphs survive a restart: `GET /graphs`, `GET /graph/{id}` and every graph-scoped endpoint serve stored graphs after the server is started again | `Api.kt`, `GraphStoreTest.kt`, `ApiTest.kt` |
+| FR-STO-05 | Deleting a graph removes the named graph, its description, its chat history and its files directory | `GraphStore.kt`, `Api.kt` |
+| FR-STO-06 | `GET /download_graph/{id}` serializes the stored graph on demand as Turtle with the graph's prefixes | `GraphStore.kt`, `Api.kt` |
+| FR-STO-07 | Per-graph files under `$KG_DATA_DIR/graphs/<id>/`: the uploaded document as `uploaded_<name>` and `knowledge_graph.png`; the CLI and batch tools also write `knowledge_graph.ttl` there | `Api.kt`, `Main.kt`, `BatchProcessor.kt` |
+| FR-STO-08 | The CLI and batch tools store their graphs in the same dataset, so the API and UI can serve them | `Main.kt`, `BatchProcessor.kt` |
+| FR-STO-09 | The dataset is single-process: a second process on the same directory fails to start with a lock error | Jena TDB2 |
+
+### 11.4 API additions (FR-API)
+
+| ID | Method and path | Request | Response | Source |
+|---|---|---|---|---|
+| FR-API-17 | `GET /graph/{id}/cloud.json` | — | `{title, description, nodes: [{id, label, group, summary, description}], links: [{source, target, kind}]}`: one node per resource, typed entities and bare relation targets alike, sorted by label; one link per distinct relation triple; `group` is the readable class name (`Entity` when untyped); `summary` is the connection count; `description` lists the node's facts one per line. 404 `Graph not found` for an unknown id | `CloudExport.kt`, `Api.kt` |
+| FR-API-03 (changed) | `POST /upload` | multipart `file` | As before; `output_dir` is the graph's files directory under `$KG_DATA_DIR/graphs/<id>` | `Api.kt` |
+| FR-API-06 (changed) | `DELETE /graph/{id}` | — | `{message}`; removes the graph, its description, chat history and files | `Api.kt` |
+
+### 11.5 3D cloud view (FR-3D)
+
+The workspace's second tab, after Overview. Source: `frontend/cloud/` (a port of term-graph's cloud view) and `frontend/web/.../CloudTab.kt`.
+
+| ID | Requirement |
+|---|---|
+| FR-3D-01 | Tab `3D Cloud` loads `GET /graph/{id}/cloud.json`; shows a spinner with `Laying out the graph...` while loading, `Failed to load the graph.` on error, and `This graph has no entities to show.` for an empty graph |
+| FR-3D-02 | Entities render as flat discs sized by their connection count, relations as curved links, with camera-facing labels in JetBrains Mono; the scene spins in on load and drifts slowly when idle |
+| FR-3D-03 | Drag rotates the scene; on release the rotation continues at the drag's speed (capped at 2.4 rad/s) and decays with a 0.6 s time constant. Scroll zooms. Panning is disabled and the camera target stays inside a bounded box |
+| FR-3D-04 | Hovering highlights a term and its links; clicking a term focuses it: the camera swings to frame it and a side panel opens with its group, position `n / total`, label, connection count, facts, and neighbours grouped by relation. Neighbours are clickable; `Prev` and `Next` step through the terms; `✕` closes |
+| FR-3D-05 | Search: a magnifier toggle opens a field; matches by label substring, at most 15, with a `N TERMS` count; matches gather into their own cluster and the rest fade; Enter focuses the first match and closes the field; Escape or `✕` clears the search; a query with no matches leaves the graph unchanged |
+| FR-3D-06 | Keyboard: Escape clears the focused term; with a term focused, ← and → step to the previous and next term. Keys typed into any text field are left to the field |
+| FR-3D-07 | Hint `Drag to rotate • Scroll to zoom` is shown over the scene |
+| FR-3D-08 | Not ported from term-graph: process-map and cone-tree layouts, depth of field, dataset loading by drop, URL or picker, and the `?term=` deep link |
+
+### 11.6 Traceability additions
+
+| Feature | Backend FRs | API FRs | React UI FRs |
+|---|---|---|---|
+| Persist graphs | STO-01…09 | API-04…06, API-13 | UI-80…83 |
+| 3D cloud view | STO-04 | API-17 | 3D-01…08 |
+
+The Streamlit column of §10 no longer applies.
+
