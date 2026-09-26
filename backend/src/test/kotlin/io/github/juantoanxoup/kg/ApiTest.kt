@@ -1,5 +1,6 @@
 package io.github.juantoanxoup.kg
 
+import ai.koog.agents.testing.tools.getMockExecutor
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
@@ -276,6 +277,66 @@ class ApiTest {
             assertEquals(HttpStatusCode.NotFound, client.get("/graph/$id").status)
             assertFalse(state.store.contains(id))
             assertFalse(state.filesDir(id).exists())
+        }
+    }
+
+    @Test
+    fun `question answering streams the facts, the answer in pieces and a final event`(
+        @TempDir root: Path,
+    ) = ApiState(
+        openAiApiKey = "test",
+        promptExecutor =
+            getMockExecutor { mockLLMAnswer("Albert Einstein worked at Princeton University.").asDefaultResponse },
+        embedder = StubEmbedder(),
+        dataDir = root,
+    ).use { state ->
+        runBlocking { state.registerGraph(graphId, "sample.txt", sampleGraph(), entitiesCount = 4, relationsCount = 2) }
+        testApplication {
+            application { module(state) }
+            val response =
+                client.post("/question_answer/stream") {
+                    contentType(ContentType.Application.Json)
+                    setBody("""{"graph_id":"$graphId","question":"where did einstein work?"}""")
+                }
+            assertEquals(HttpStatusCode.OK, response.status)
+            assertTrue(response.contentType()!!.match(ContentType.Text.EventStream))
+            val events =
+                response
+                    .bodyAsText()
+                    .split("\n\n")
+                    .filter { it.isNotBlank() }
+                    .map { block ->
+                        val lines = block.lines()
+                        lines.first { it.startsWith("event:") }.removePrefix("event:").trim() to
+                            lines
+                                .filter {
+                                    it.startsWith(
+                                        "data:",
+                                    )
+                                }.joinToString("\n") { it.removePrefix("data:").trim() }
+                    }
+            assertEquals("facts", events.first().first)
+            assertTrue(
+                json
+                    .parseToJsonElement(events.first().second)
+                    .jsonObject["relevant_facts"]!!
+                    .jsonArray
+                    .isNotEmpty(),
+            )
+            assertTrue(events.any { it.first == "delta" })
+            assertEquals("done", events.last().first)
+            val done = json.parseToJsonElement(events.last().second).jsonObject
+            assertEquals("Albert Einstein worked at Princeton University.", done["answer"]!!.jsonPrimitive.content)
+            assertEquals("where did einstein work?", done["question"]!!.jsonPrimitive.content)
+            assertEquals(
+                done["answer"]!!.jsonPrimitive.content,
+                events.filter { it.first == "delta" }.joinToString("") {
+                    json
+                        .parseToJsonElement(it.second)
+                        .jsonObject["text"]!!
+                        .jsonPrimitive.content
+                },
+            )
         }
     }
 }

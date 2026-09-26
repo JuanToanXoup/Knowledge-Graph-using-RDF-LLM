@@ -25,7 +25,7 @@ The original Vite/TypeScript UI was removed once this port was complete; it is p
 | `src/pages/*` | `pages/*` |
 | `src/components/{Header,Footer,ParticleBackground}.tsx` | `components/*` |
 | `src/components/landing/*` | `components/landing/*` |
-| `src/components/workspace/*` | `components/workspace/*` |
+| `src/components/workspace/*` | `components/workspace/*`; `ChatTab.tsx` is retired: its sidebar item opens the Graph Assistant |
 | `src/components/ui/*` (the eight primitives actually used) | `components/ui/*` |
 | `src/hooks/*` | `hooks/*` |
 | `src/lib/utils.ts` | `lib/Utils.kt`; plus `lib/Api.kt` (typed client), `lib/Models.kt` (response models) and `lib/Markdown.kt` (react-markdown, remark-gfm) |
@@ -64,6 +64,6 @@ One floating component on every page (`components/chat/ChatPanel.kt`, mounted by
 | Views | Button (bottom right pill), card (invite + composer, before the first message), sidebar (docked right below the header, over the page), fullscreen. The view is remembered across pages; a phone has no card and opens fullscreen |
 | Toolbar | Name, privacy note popover, overflow menu (download chat transcript, end conversation), expand or contract, minimize |
 | Graph | The page's `/workspace/{id}` graph, else the last chosen one, else a choice of graphs in the conversation; history per graph through the chat-history API |
-| Conversation | Hero until the first message, status rows (joined, ended), the person's messages, answers rendered as Markdown with the cited facts as source cards, typing indicator, scroll-to-bottom control |
+| Conversation | Hero until the first message, status rows (joined, ended), the person's messages, answers streamed over server-sent events (`POST /question_answer/stream`, parsed by `lib/Sse.kt`) and rendered as Markdown as they arrive, the cited facts as source cards, typing indicator until the first piece, scroll-to-bottom control |
 | Composer | Grows with its lines, Enter sends, Shift+Enter keeps a new line; a second line in the card opens the sidebar |
 | End | End conversation clears the server history and shows the return bar; Start a new conversation begins again |

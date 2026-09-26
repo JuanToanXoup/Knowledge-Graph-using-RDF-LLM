@@ -3,7 +3,7 @@ package io.github.juantoanxoup.kg.web.pages
 import io.github.juantoanxoup.kg.web.GRAPH_ID_PARAM
 import io.github.juantoanxoup.kg.web.components.Header
 import io.github.juantoanxoup.kg.web.components.ParticleBackground
-import io.github.juantoanxoup.kg.web.components.workspace.ChatTab
+import io.github.juantoanxoup.kg.web.components.chat.ChatPanelController
 import io.github.juantoanxoup.kg.web.components.workspace.CloudTab
 import io.github.juantoanxoup.kg.web.components.workspace.EntityTab
 import io.github.juantoanxoup.kg.web.components.workspace.MyGraphsTab
@@ -91,7 +91,8 @@ val Workspace =
                 WorkspaceSidebar {
                     this.activeTab = activeTab
                     onTabChange = { tab ->
-                        activeTab = tab
+                        // Chat lives in the site-wide Graph Assistant; the item opens it and the tab stays put.
+                        if (tab == TabType.CHAT) ChatPanelController.open() else activeTab = tab
                         if (isMobile) sidebarOpen = false
                     }
                     isOpen = sidebarOpen
@@ -119,7 +120,7 @@ val Workspace =
                             TabType.OVERVIEW -> needsGraph { id -> OverviewTab { this.graphId = id } }
                             TabType.CLOUD -> needsGraph { id -> CloudTab { this.graphId = id } }
                             TabType.SEARCH -> needsGraph { id -> SearchTab { this.graphId = id } }
-                            TabType.CHAT -> needsGraph { id -> ChatTab { this.graphId = id } }
+                            TabType.CHAT -> Unit
                             TabType.ENTITY -> needsGraph { id -> EntityTab { this.graphId = id } }
                             TabType.SPARQL -> needsGraph { id -> SparqlTab { this.graphId = id } }
                             TabType.GRAPHS -> MyGraphsTab()

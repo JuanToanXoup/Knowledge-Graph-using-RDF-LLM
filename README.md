@@ -25,7 +25,7 @@ The workspace after uploading a file:
 - **Relation extraction**: dependency-parse patterns plus LLM inference, merged and validated
 - **Graph construction**: RDF graphs with deduplication and merging across documents
 - **Visualization**: PNG network diagrams (JGraphT + JGraphX) and an interactive 3D cloud of the graph in the workspace (drag to rotate, click to focus, Escape and ←/→ to navigate)
-- **Querying**: semantic search, LLM question answering, entity relations, SPARQL SELECT
+- **Querying**: semantic search, LLM question answering (streamed), entity relations, SPARQL SELECT
 - **Graph Assistant**: a site-wide chat that floats over every page, modelled on Salesforce's Agentforce panel: a button, a card, a docked sidebar or fullscreen; answers about the graph the page is on, cites the facts it used, keeps history per graph
 - **Batch processing**: several documents into one unified graph
 
@@ -106,6 +106,7 @@ Graphs are kept in an [Apache Jena TDB2](https://jena.apache.org/documentation/t
 | GET/POST/DELETE | `/chat_history/{id}` | Chat history of a graph |
 | POST | `/semantic_search` | Semantic search |
 | POST | `/question_answer` | LLM question answering |
+| POST | `/question_answer/stream` | The same answer as server-sent events: `facts`, then `delta` pieces, then `done` |
 | POST | `/entity_relations` | Relations of an entity |
 | POST | `/sparql_query` | Run a SPARQL SELECT |
 

@@ -96,6 +96,24 @@ data class QuestionAnswerResponse(
     @SerialName("relevant_facts") val relevantFacts: List<SearchResult> = emptyList(),
 )
 
+/** `facts` event of `POST /question_answer/stream`. */
+@Serializable
+data class QuestionFactsEvent(
+    @SerialName("relevant_facts") val relevantFacts: List<SearchResult> = emptyList(),
+)
+
+/** `delta` event of `POST /question_answer/stream`. */
+@Serializable
+data class QuestionDeltaEvent(
+    val text: String,
+)
+
+/** `error` event of `POST /question_answer/stream`. */
+@Serializable
+data class QuestionErrorEvent(
+    val detail: String,
+)
+
 @Serializable
 data class EntityRelationsRequest(
     @SerialName("graph_id") val graphId: String,

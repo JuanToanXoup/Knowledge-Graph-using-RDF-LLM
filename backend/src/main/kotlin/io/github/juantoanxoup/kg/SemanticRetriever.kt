@@ -5,9 +5,12 @@ import ai.djl.repository.zoo.Criteria
 import ai.djl.repository.zoo.ZooModel
 import ai.koog.embeddings.base.Embedder
 import ai.koog.embeddings.base.Vector
+import ai.koog.prompt.Prompt
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.streaming.filterTextOnly
+import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
@@ -83,35 +86,47 @@ class SemanticRetriever(
     suspend fun answerQuestionLlm(
         question: String,
         executor: PromptExecutor,
-    ): String {
-        val relevant = search(question, topK = QA_CONTEXT_SIZE)
-        val context = relevant.joinToString("\n") { "- ${it.subject} ${it.predicate} ${it.obj}" }
-        val request =
-            prompt("question-answering", LLMParams(temperature = QA_TEMPERATURE)) {
-                system("You are a helpful assistant that answers questions based on knowledge graph facts.")
-                user(
-                    """
-                    Based on the following knowledge graph facts, answer the question.
-
-                    Facts:
-                    $context
-
-                    Question: $question
-
-                    Answer:
-                    """.trimIndent(),
-                )
-            }
-        return runCatching { executor.execute(request, OpenAiHelper.defaultModel).textContent() }
+    ): String =
+        runCatching { executor.execute(questionPrompt(question), OpenAiHelper.defaultModel).textContent() }
             .onFailure { log.error("Question answering failed: {}", it.message) }
             .getOrNull()
             ?.takeIf { it.isNotBlank() }
-            ?: "Unable to generate answer"
+            ?: NO_ANSWER
+
+    /**
+     * The answer as the model writes it: a flow of text pieces in order. Failures surface to the collector, which
+     * decides what to show; an empty answer is the collector's to replace with [NO_ANSWER].
+     */
+    suspend fun answerQuestionLlmStreaming(
+        question: String,
+        executor: PromptExecutor,
+    ): Flow<String> = executor.executeStreaming(questionPrompt(question), OpenAiHelper.defaultModel).filterTextOnly()
+
+    /** The question with the graph facts nearest to it as context, the prompt both answer paths send. */
+    private suspend fun questionPrompt(question: String): Prompt {
+        val relevant = search(question, topK = QA_CONTEXT_SIZE)
+        val context = relevant.joinToString("\n") { "- ${it.subject} ${it.predicate} ${it.obj}" }
+        return prompt("question-answering", LLMParams(temperature = QA_TEMPERATURE)) {
+            system("You are a helpful assistant that answers questions based on knowledge graph facts.")
+            user(
+                """
+                Based on the following knowledge graph facts, answer the question.
+
+                Facts:
+                $context
+
+                Question: $question
+
+                Answer:
+                """.trimIndent(),
+            )
+        }
     }
 
-    private companion object {
-        const val QA_CONTEXT_SIZE = 10
-        const val QA_TEMPERATURE = 0.7
+    companion object {
+        const val NO_ANSWER = "Unable to generate answer"
+        private const val QA_CONTEXT_SIZE = 10
+        private const val QA_TEMPERATURE = 0.7
     }
 }
 

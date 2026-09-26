@@ -1,9 +1,12 @@
 package io.github.juantoanxoup.kg.web.lib
 
+import js.buffer.AllowSharedBufferSource
 import js.promise.await
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import web.encoding.TextDecodeOptions
+import web.encoding.TextDecoder
 import web.file.File
 import web.form.FormData
 import web.http.BodyInit
@@ -58,6 +61,47 @@ object Api {
         )
 
     suspend fun delete(path: String): String = request(path, RequestMethod.DELETE)
+
+    /**
+     * POSTs [body] and reads the server-sent events of the reply as they arrive, handing each to [onEvent].
+     * A non-2xx status throws [ApiError] before any event.
+     */
+    suspend inline fun <reified B> postSse(
+        path: String,
+        body: B,
+        noinline onEvent: (SseEvent) -> Unit,
+    ) = streamRaw(path, json.encodeToString(body), onEvent)
+
+    suspend fun streamRaw(
+        path: String,
+        jsonBody: String,
+        onEvent: (SseEvent) -> Unit,
+    ) {
+        val headers =
+            Headers().apply {
+                append("Content-Type", "application/json")
+                append("Accept", "text/event-stream")
+            }
+        val response =
+            fetch(url(path), RequestInit(method = RequestMethod.POST, body = BodyInit(jsonBody), headers = headers))
+        if (!response.ok) {
+            throw ApiError(
+                response.status.toInt(),
+                extractDetail(response.textAsync().await().toString()),
+            )
+        }
+        val reader = response.body?.getReader() ?: throw ApiError(response.status.toInt(), "No response body")
+        val decoder = TextDecoder()
+        val parser = SseParser()
+        val streaming = js("({stream: true})").unsafeCast<TextDecodeOptions>()
+        while (true) {
+            val result = reader.readAsync().await()
+            if (result.done) break
+            val chunk = result.value ?: continue
+            parser.feed(decoder.decode(chunk.unsafeCast<AllowSharedBufferSource>(), streaming)).forEach(onEvent)
+        }
+        parser.end().forEach(onEvent)
+    }
 
     /** Multipart upload of one file under the `file` field. */
     suspend inline fun <reified T> upload(

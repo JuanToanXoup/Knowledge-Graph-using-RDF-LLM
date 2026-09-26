@@ -19,6 +19,9 @@ import io.github.juantoanxoup.kg.web.lib.Minus
 import io.github.juantoanxoup.kg.web.lib.MoreVertical
 import io.github.juantoanxoup.kg.web.lib.QuestionAnswerRequest
 import io.github.juantoanxoup.kg.web.lib.QuestionAnswerResponse
+import io.github.juantoanxoup.kg.web.lib.QuestionDeltaEvent
+import io.github.juantoanxoup.kg.web.lib.QuestionErrorEvent
+import io.github.juantoanxoup.kg.web.lib.QuestionFactsEvent
 import io.github.juantoanxoup.kg.web.lib.Sparkles
 import io.github.juantoanxoup.kg.web.lib.X
 import io.github.juantoanxoup.kg.web.lib.cn
@@ -161,6 +164,19 @@ val ChatPanel =
             }
         }
 
+        // The workspace's "Chat & Q&A" item, or any page, opens the panel.
+        useEffect(isMobile) {
+            val unsubscribe =
+                ChatPanelController.subscribe {
+                    setView(PanelViews.opened(PanelViews.parse(remembered(PanelViews.STORAGE_KEY + ".open")), isMobile))
+                }
+            try {
+                kotlinx.coroutines.awaitCancellation()
+            } finally {
+                unsubscribe()
+            }
+        }
+
         suspend fun save(
             gid: String,
             role: String,
@@ -191,24 +207,71 @@ val ChatPanel =
             ended = false
             scope.launch {
                 save(gid, "user", question, emptyList())
-                try {
-                    val answer =
-                        Api.postJson<QuestionAnswerRequest, QuestionAnswerResponse>(
-                            "/question_answer",
-                            QuestionAnswerRequest(gid, question),
-                        )
-                    val facts = answer.relevantFacts.map { it.text }
-                    setEntries { it + ChatEntry.Agent(id(), answer.answer, clockTime(), facts) }
-                    save(gid, "assistant", answer.answer, facts)
-                } catch (e: Throwable) {
-                    setEntries {
-                        it +
-                            ChatEntry.Agent(
-                                id(),
-                                "I could not get an answer: ${e.message ?: "the request failed"}. Please try again.",
-                                clockTime(),
-                            )
+                // The answer streams: the typing indicator until the first piece, then the message grows in place.
+                val answerId = id()
+                var text = ""
+                var facts: List<String> = emptyList()
+                var started = false
+                var finished = false
+
+                fun show() {
+                    setEntries { list ->
+                        val entry = ChatEntry.Agent(answerId, text, clockTime(), facts)
+                        if (list.any { it.id == answerId }) {
+                            list.map {
+                                if (it.id ==
+                                    answerId
+                                ) {
+                                    entry
+                                } else {
+                                    it
+                                }
+                            }
+                        } else {
+                            list + entry
+                        }
                     }
+                }
+                try {
+                    Api.postSse("/question_answer/stream", QuestionAnswerRequest(gid, question)) { event ->
+                        when (event.event) {
+                            "facts" ->
+                                facts =
+                                    Api.json
+                                        .decodeFromString<QuestionFactsEvent>(event.data)
+                                        .relevantFacts
+                                        .map { it.text }
+                            "delta" -> {
+                                text += Api.json.decodeFromString<QuestionDeltaEvent>(event.data).text
+                                if (!started) {
+                                    started = true
+                                    loading = false
+                                }
+                                show()
+                            }
+                            "done" -> {
+                                val done = Api.json.decodeFromString<QuestionAnswerResponse>(event.data)
+                                text = done.answer
+                                facts = done.relevantFacts.map { it.text }
+                                finished = true
+                                show()
+                            }
+                            "error" -> {
+                                val detail = Api.json.decodeFromString<QuestionErrorEvent>(event.data).detail
+                                text =
+                                    if (text.isBlank()) {
+                                        "I could not get an answer: $detail. Please try again."
+                                    } else {
+                                        "$text\n\n*The answer was cut short: $detail.*"
+                                    }
+                                show()
+                            }
+                        }
+                    }
+                    if (finished) save(gid, "assistant", text, facts)
+                } catch (e: Throwable) {
+                    text = "I could not get an answer: ${e.message ?: "the request failed"}. Please try again."
+                    show()
                 } finally {
                     loading = false
                 }

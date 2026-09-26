@@ -25,6 +25,7 @@ import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondBytes
+import io.ktor.server.response.respondTextWriter
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
@@ -126,6 +127,24 @@ data class GraphInfo(
     @SerialName("relations_count") val relationsCount: Int,
     val statistics: GraphStatistics,
     @SerialName("sample_entities") val sampleEntities: List<String>,
+)
+
+/** `facts` event of `POST /question_answer/stream`: the facts the answer will rest on, sent before it starts. */
+@Serializable
+data class QuestionFactsEvent(
+    @SerialName("relevant_facts") val relevantFacts: List<SearchResult>,
+)
+
+/** `delta` event of `POST /question_answer/stream`: the next piece of the answer's text. */
+@Serializable
+data class QuestionDeltaEvent(
+    val text: String,
+)
+
+/** `error` event of `POST /question_answer/stream`. */
+@Serializable
+data class QuestionErrorEvent(
+    val detail: String,
 )
 
 @Serializable
@@ -375,6 +394,9 @@ class ApiState(
 
 private const val API_VERSION = "1.0.0"
 private const val RELEVANT_FACTS = 5
+
+/** Encoder for the payloads of server-sent events, the same shapes as the JSON responses. */
+private val eventJson = Json { encodeDefaults = true }
 private const val SAMPLE_ENTITIES = 10
 private val TURTLE = ContentType("text", "turtle")
 private const val STATIC_RESOURCES = "static"
@@ -432,6 +454,7 @@ fun Application.module(
                         put("graphs", "/graphs")
                         put("semantic_search", "/semantic_search")
                         put("question_answer", "/question_answer")
+                        put("question_answer_stream", "/question_answer/stream")
                         put("entity_relations", "/entity_relations")
                         put("sparql_query", "/sparql_query")
                         put("visualization", "/visualization/{graph_id}")
@@ -582,6 +605,49 @@ fun Application.module(
             val answer = withContext(Dispatchers.IO) { g.retriever.answerQuestionLlm(request.question, executor) }
             val facts = withContext(Dispatchers.IO) { g.retriever.search(request.question, RELEVANT_FACTS) }
             call.respond(QuestionAnswerResponse(request.question, answer, facts))
+        }
+
+        // Server-sent events over a POST body: `facts` first, then `delta` pieces as the model writes, then `done`
+        // with the whole answer, or `error`. The client saves the finished answer to the chat history itself.
+        post("/question_answer/stream") {
+            val request = call.receive<QuestionAnswerRequest>()
+            val g = state.graph(request.graphId)
+            val executor =
+                state.promptExecutor ?: throw ApiException(HttpStatusCode.BadRequest, "OpenAI API key not configured")
+            val facts = withContext(Dispatchers.IO) { g.retriever.search(request.question, RELEVANT_FACTS) }
+            call.response.header(HttpHeaders.CacheControl, "no-cache")
+            call.response.header("X-Accel-Buffering", "no")
+            call.respondTextWriter(ContentType.Text.EventStream) {
+                fun event(
+                    name: String,
+                    data: String,
+                ) {
+                    write("event: $name\ndata: $data\n\n")
+                    flush()
+                }
+                event("facts", eventJson.encodeToString(QuestionFactsEvent(facts)))
+                val answer = StringBuilder()
+                try {
+                    g.retriever.answerQuestionLlmStreaming(request.question, executor).collect { piece ->
+                        answer.append(piece)
+                        event("delta", eventJson.encodeToString(QuestionDeltaEvent(piece)))
+                    }
+                    if (answer.isBlank()) {
+                        answer.append(SemanticRetriever.NO_ANSWER)
+                        event("delta", eventJson.encodeToString(QuestionDeltaEvent(SemanticRetriever.NO_ANSWER)))
+                    }
+                    event(
+                        "done",
+                        eventJson.encodeToString(QuestionAnswerResponse(request.question, answer.toString(), facts)),
+                    )
+                } catch (e: Exception) {
+                    call.application.log.error("Question answering failed: {}", e.message)
+                    event(
+                        "error",
+                        eventJson.encodeToString(QuestionErrorEvent(e.message ?: "Question answering failed")),
+                    )
+                }
+            }
         }
 
         post("/entity_relations") {

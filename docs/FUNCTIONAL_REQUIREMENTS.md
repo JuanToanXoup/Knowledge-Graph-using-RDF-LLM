@@ -443,6 +443,7 @@ Applies from commit `683ef48` (the port) and `21131cb` (persistent storage and t
 | Change | Detail |
 |---|---|
 | Streamlit UI (§6.14) dropped | The React web UI is the single client (D-07). FR-SUI requirements no longer apply |
+| Chat & Q&A tab (§6.13) retired | The site-wide Graph Assistant (§11.6) is the chat; the workspace's sidebar item opens it |
 | `start.sh` (§6.17) replaced | Gradle tasks: `:application:runFullStack` serves API and UI from one server; `:backend:run`, `:backend:runCli`, `:backend:runBatch` for the API alone, the single-file CLI and the batch CLI. No auto-reload (D-14) |
 | Files per graph (§7.2) replaced | See §11.3. No `metadata.json`; descriptions live in the store |
 | Base URL (§6.12) | Same-origin from the bundled UI; `PORT` selects the port (default 8000) |
@@ -490,6 +491,7 @@ Applies from commit `683ef48` (the port) and `21131cb` (persistent storage and t
 | FR-API-17 | `GET /graph/{id}/cloud.json` | — | `{title, description, nodes: [{id, label, group, summary, description}], links: [{source, target, kind}]}`: one node per resource, typed entities and bare relation targets alike, sorted by label; one link per distinct relation triple; `group` is the readable class name (`Entity` when untyped); `summary` is the connection count; `description` lists the node's facts one per line. 404 `Graph not found` for an unknown id | `CloudExport.kt`, `Api.kt` |
 | FR-API-03 (changed) | `POST /upload` | multipart `file` | As before; `output_dir` is the graph's files directory under `$KG_DATA_DIR/graphs/<id>` | `Api.kt` |
 | FR-API-06 (changed) | `DELETE /graph/{id}` | — | `{message}`; removes the graph, its description, chat history and files | `Api.kt` |
+| FR-API-18 | `POST /question_answer/stream` | `{graph_id, question}` | `text/event-stream`: `facts` `{relevant_facts}` first, then `delta` `{text}` per piece as the model writes, then `done` with the `/question_answer` body, or `error` `{detail}`; 400 when no API key; 404 for an unknown graph | `Api.kt`, `SemanticRetriever.kt` |
 
 ### 11.5 3D cloud view (FR-3D)
 
@@ -522,6 +524,8 @@ One floating chat component on every page, added after the Kotlin port. Its part
 | FR-CHT-08 | Messages and answers are stored through `POST /chat_history/{id}` and reloaded per graph; End conversation clears them through `DELETE /chat_history/{id}` and shows a return bar that starts a new conversation |
 | FR-CHT-09 | Download chat transcript saves the conversation as a text file named after the graph and the day |
 | FR-CHT-10 | Toasts move to the bottom left so the chat's corner stays free |
+| FR-CHT-11 | Answers stream: the typing indicator shows until the first piece of text arrives, then the answer grows in place, rendered as Markdown as it arrives; the facts are shown with it; a stream that breaks shows what arrived and why it stopped |
+| FR-CHT-12 | The workspace's "Chat & Q&A" tab is retired; its sidebar item opens the assistant. FR-UI-50…55 are met by the assistant |
 
 ### 11.7 Traceability additions
 
